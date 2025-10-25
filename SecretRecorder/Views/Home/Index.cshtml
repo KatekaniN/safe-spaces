@@ -6,27 +6,37 @@
     <div class="card-body">
         <h3 class="card-title mb-3">Secret Trigger Recorder</h3>
 
+        <!-- Trigger Management -->
         <div class="row g-3 align-items-center mb-3">
             <div class="col-md-6">
-                <label class="form-label">Secret trigger word</label>
-                <input id="triggerInput" class="form-control" placeholder="Enter trigger word (e.g., 'hello Lila')" maxlength="50" />
-                <div id="triggerHelp" class="form-text">Stored locally in your browser session.</div>
+                <label for="triggerInput" class="form-label">Add text trigger</label>
+                <input id="triggerInput" class="form-control" placeholder="e.g., 'help me lila'" maxlength="50" />
+                <div id="triggerHelp" class="form-text">Triggers are stored locally in your browser.</div>
             </div>
-
             <div class="col-auto">
                 <label class="form-label d-block">&nbsp;</label>
-                <button id="saveTriggerBtn" class="btn btn-primary">Save trigger</button>
+                <button id="addTextTriggerBtn" class="btn btn-primary">Save Trigger</button>
             </div>
-
             <div class="col-auto">
                 <label class="form-label d-block">&nbsp;</label>
-                <button id="toggleListenBtn" class="btn btn-outline-success">Start Listening</button>
+                <button id="recordTriggerBtn" class="btn btn-info"><span class="bi-mic-fill"></span> Hold to Record Trigger</button>
             </div>
         </div>
 
+        <!-- Display Saved Triggers -->
+        <div class="mb-3">
+            <h6>Your Custom Triggers</h6>
+            <div id="triggersList" class="list-group list-group-flush">
+                <!-- Triggers will be rendered here by JS -->
+            </div>
+        </div>
+
+        <hr />
+
+        <!-- Status Indicators -->
         <div class="mb-3">
             <span id="listeningStatus" class="me-3">
-                <span class="bi-mic-fill">🎤</span> Listening: <strong id="listeningText">stopped</strong>
+                <span class="bi-mic-fill">🎤</span> Listening: <strong id="listeningText">initializing...</strong>
             </span>
             <span id="recordingStatus" class="me-3">
                 <span id="recordIndicator" style="display:none">🔴</span> Recording: <strong id="recordingText">idle</strong>

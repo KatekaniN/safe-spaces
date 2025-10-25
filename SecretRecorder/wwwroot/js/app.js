@@ -2,8 +2,10 @@
 (() => {
     // Elements
     const triggerInput = document.getElementById('triggerInput');
-    const saveTriggerBtn = document.getElementById('saveTriggerBtn');
-    const toggleListenBtn = document.getElementById('toggleListenBtn');
+    const addTextTriggerBtn = document.getElementById('addTextTriggerBtn');
+    const recordTriggerBtn = document.getElementById('recordTriggerBtn');
+    const triggersList = document.getElementById('triggersList');
+    // const toggleListenBtn = document.getElementById('toggleListenBtn'); // REMOVED
     const listeningText = document.getElementById('listeningText');
     const recordingText = document.getElementById('recordingText');
     const recordIndicator = document.getElementById('recordIndicator');
@@ -13,103 +15,122 @@
 
     // state
     let recognition = null;
+    let triggerRecorderRecognition = null;
     let listening = false;
+    let isPausingForTrigger = false; // NEW: Flag to control auto-restart
     let mediaRecorder = null;
     let audioChunks = [];
     let countdownTimer = null;
     let countdownRemaining = 0;
-    let triggerWord = localStorage.getItem('secretTrigger') || '';
-    let triggerWordNormalized = triggerWord ? normalizeForThreatDetection(triggerWord) : '';
-    const RECORD_DURATION_MS = 10 * 1000; // exactly 1 minute
+    let triggerWords = [];
+    let triggerWordsNormalized = [];
+    const RECORD_DURATION_MS = 60 * 1000; // 60 seconds
 
     // keyword detection config
     const THREAT_PHRASES = [
-        'help me',
-        'please help',
-        'call the police',
-        'call 911',
-        'life in danger',
-        'i will kill you',
-        'ill kill you',
-        'i will hurt you',
-        'ill hurt you',
-        'i will stab you',
-        'ill stab you',
-        'i will shoot you',
-        'ill shoot you',
-        'i am going to kill you',
-        'im going to kill you',
-        'i am going to hurt you',
-        'im going to hurt you',
-        'he is going to kill me',
-        'she is going to kill me',
-        'he is hurting me',
-        'she is hurting me',
-        'stop it',
-        'stop hurting me',
-        'stop hurting her',
-        'stop hurting him',
-        'blood everywhere',
-        "if you don't do that ill kill you",
-        "if you dont do that ill kill you",
-        "if you don't do that i will kill you",
-        "if you dont do that i will kill you"
+        'help me', 'please help', 'call the police', 'call 10111', 'life in danger', 'i will kill you', 'ill kill you',
+        'i will hurt you', 'ill hurt you', 'i will stab you', 'ill stab you', 'i will shoot you', 'ill shoot you',
+        'i am going to kill you', 'im going to kill you', 'i am going to hurt you', 'im going to hurt you',
+        'he is going to kill me', 'she is going to kill me', 'he is hurting me', 'she is hurting me', 'stop it',
+        'stop hurting me', 'stop hurting her', 'stop hurting him', 'blood everywhere', "if you don't do that ill kill you",
+        "if you dont do that ill kill you", "if you don't do that i will kill you", "if you dont do that i will kill you"
     ];
 
     const THREAT_TOKENS = [
-        'kill',
-        'killing',
-        'knife',
-        'gun',
-        'weapon',
-        'danger',
-        'dangerous',
-        'threat',
-        'threatening',
-        'violence',
-        'violent',
-        'abuse',
-        'abusing',
-        'fight',
-        'fighting',
-        'attack',
-        'attacking',
-        'hurt',
-        'hurting',
-        'punch',
-        'punching',
-        'kick',
-        'kicking',
-        'scream',
-        'screaming',
-        'shoot',
-        'shooting',
-        'stab',
-        'stabbing',
-        'blood',
-        'bleeding',
-        'drown',
-        'drowning',
-        'strangle',
-        'strangling'
+        'kill', 'killing', 'knife', 'gun', 'weapon', 'danger', 'dangerous', 'threat', 'threatening', 'violence',
+        'violent', 'abuse', 'abusing', 'fight', 'fighting', 'attack', 'attacking', 'hurt', 'hurting', 'punch',
+        'punching', 'kick', 'kicking', 'scream', 'screaming', 'shoot', 'shooting', 'stab', 'stabbing', 'blood',
+        'bleeding', 'drown', 'drowning', 'strangle', 'strangling'
     ];
 
     // audio-based aggression thresholds
-    const RMS_THRESHOLD = 0.12;            // slightly lowered
-    const RMS_FRAMES_REQUIRED = 8;         // ~130ms at 60fps
-    const PEAK_THRESHOLD = 0.5;            // instantaneous yell / scream
-    const THREAT_COOLDOWN_MS = 45 * 1000;  // avoid duplicate recordings
+    const RMS_THRESHOLD = 0.12;
+    const RMS_FRAMES_REQUIRED = 8;
+    const PEAK_THRESHOLD = 0.5;
+    const THREAT_COOLDOWN_MS = 45 * 1000;
 
     let monitorStream = null;
     let aggressionMonitor = null;
     let threatCooldownActive = false;
     let messageLockTimer = null;
 
-    // initialize UI
-    triggerInput.value = triggerWord;
+    // --- NEW TRIGGER MANAGEMENT FUNCTIONS ---
+
+    function renderTriggers() {
+        triggersList.innerHTML = '';
+        if (triggerWords.length === 0) {
+            triggersList.innerHTML = '<div class="list-group-item text-muted small">No custom triggers added yet.</div>';
+        } else {
+            triggerWords.forEach(word => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                const text = document.createElement('span');
+                text.textContent = word;
+                item.appendChild(text);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-sm btn-outline-danger';
+                deleteBtn.innerHTML = '<span class="bi-trash"></span>';
+                deleteBtn.setAttribute('aria-label', `Delete trigger: ${word}`);
+                deleteBtn.onclick = () => deleteTrigger(word);
+                item.appendChild(deleteBtn);
+
+                triggersList.appendChild(item);
+            });
+        }
+        // Update normalized list
+        triggerWordsNormalized = triggerWords.map(normalizeForThreatDetection);
+    }
+
+    function saveTriggersToStorage() {
+        localStorage.setItem('secretTriggers', JSON.stringify(triggerWords));
+    }
+
+    function loadTriggersFromStorage() {
+        const stored = localStorage.getItem('secretTriggers');
+        try {
+            triggerWords = JSON.parse(stored || '[]');
+            if (!Array.isArray(triggerWords)) triggerWords = [];
+        } catch {
+            triggerWords = [];
+        }
+        renderTriggers();
+    }
+
+    function addTrigger(text) {
+        const val = text.trim();
+        if (!val) {
+            showMessage('Trigger cannot be empty.', true);
+            return false;
+        }
+        if (val.length > 50) {
+            showMessage('Trigger is too long (max 50 chars).', true);
+            return false;
+        }
+        const normalizedVal = normalizeForThreatDetection(val);
+        if (triggerWordsNormalized.includes(normalizedVal)) {
+            showMessage(`Trigger "${val}" already exists.`, true);
+            return false;
+        }
+        triggerWords.push(val);
+        saveTriggersToStorage();
+        renderTriggers();
+        showMessage(`Trigger added: "${val}"`);
+        return true;
+    }
+
+    function deleteTrigger(wordToDelete) {
+        triggerWords = triggerWords.filter(w => w !== wordToDelete);
+        saveTriggersToStorage();
+        renderTriggers();
+        showMessage(`Trigger deleted: "${wordToDelete}"`);
+    }
+
+    // --- END NEW TRIGGER MANAGEMENT FUNCTIONS ---
+
     updateUI();
 
-    // request microphone access on load so permissions prompt appears early
     async function requestMic() {
         try {
             const tempStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -120,36 +141,106 @@
         }
     }
 
-    // Save trigger
-    saveTriggerBtn.addEventListener('click', () => {
-        const val = triggerInput.value.trim();
-        if (!val) {
-            showMessage('Trigger word cannot be empty.', true);
-            return;
+    addTextTriggerBtn.addEventListener('click', () => {
+        if (addTrigger(triggerInput.value)) {
+            triggerInput.value = ''; // Clear on success
         }
-        if (val.length > 50) {
-            showMessage('Trigger word too long.', true);
-            return;
+    });
+    triggerInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTextTriggerBtn.click();
         }
-        triggerWord = val;
-        triggerWordNormalized = normalizeForThreatDetection(triggerWord);
-        localStorage.setItem('secretTrigger', triggerWord);
-        showMessage(`Trigger saved: "${triggerWord}"`);
     });
 
-    // Toggle listening
-    toggleListenBtn.addEventListener('click', () => {
+    // --- NEW VOICE TRIGGER RECORDING ---
+
+    function startRecordTrigger() {
+        if (triggerRecorderRecognition) return; // Already recording
+
+        // NEW: Pause main listener if it's running
         if (listening) {
-            stopRecognition();
-        } else {
-            startRecognition().catch(err => {
-                console.error('Failed to start recognition', err);
-                showMessage('Failed to start listening: ' + (err.message || err), true);
-            });
+            console.log("Pausing main listener to record a trigger.");
+            isPausingForTrigger = true;
+            stopRecognition(); // This will trigger onend, which will see the flag and stop.
         }
-    });
 
-    // show short messages
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            showMessage('Speech recognition not available in this browser.', true);
+            return;
+        }
+
+        triggerRecorderRecognition = new SpeechRecognition();
+        triggerRecorderRecognition.continuous = false;
+        triggerRecorderRecognition.interimResults = false;
+        triggerRecorderRecognition.lang = navigator.language || 'en-US';
+
+        triggerRecorderRecognition.onstart = () => {
+            recordTriggerBtn.classList.add('btn-danger');
+            recordTriggerBtn.classList.remove('btn-info');
+            recordTriggerBtn.innerHTML = '<span class="bi-mic-fill"></span> Recording... Release to save';
+        };
+
+        triggerRecorderRecognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            if (transcript) {
+                addTrigger(transcript);
+            } else {
+                showMessage('Could not detect any speech for the trigger.', true);
+            }
+        };
+
+        triggerRecorderRecognition.onerror = (event) => {
+            console.error('Voice trigger recognition error:', event.error);
+            showMessage(`Error recording trigger: ${event.error}`, true);
+        };
+
+        triggerRecorderRecognition.onend = () => {
+            recordTriggerBtn.classList.remove('btn-danger');
+            recordTriggerBtn.classList.add('btn-info');
+            recordTriggerBtn.innerHTML = '<span class="bi-mic-fill"></span> Hold to Record Trigger';
+            triggerRecorderRecognition = null;
+
+            // NEW: Restart main listener
+            if (isPausingForTrigger) {
+                isPausingForTrigger = false;
+                console.log("Resuming main listener after trigger recording.");
+                // Give it a moment to release the mic before restarting
+                setTimeout(() => {
+                    startRecognition().catch(err => {
+                        console.error('Failed to resume recognition', err);
+                        showMessage('Failed to resume listening: ' + (err.message || err), true);
+                    });
+                }, 250);
+            }
+        };
+
+        try {
+            triggerRecorderRecognition.start();
+        } catch (err) {
+            console.error('Could not start voice trigger recording', err);
+            showMessage('Could not start voice trigger recording.', true);
+            triggerRecorderRecognition = null; // cleanup
+        }
+    }
+
+    function stopRecordTrigger() {
+        if (triggerRecorderRecognition) {
+            triggerRecorderRecognition.stop();
+        }
+    }
+
+    recordTriggerBtn.addEventListener('mousedown', startRecordTrigger);
+    recordTriggerBtn.addEventListener('mouseup', stopRecordTrigger);
+    recordTriggerBtn.addEventListener('mouseleave', stopRecordTrigger); // Stop if mouse leaves button
+    recordTriggerBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startRecordTrigger(); });
+    recordTriggerBtn.addEventListener('touchend', (e) => { e.preventDefault(); stopRecordTrigger(); });
+
+    // --- END NEW VOICE TRIGGER RECORDING ---
+
+    // REMOVED: toggleListenBtn click listener
+
     function showMessage(text, isError = false) {
         if (messageLockTimer) {
             clearTimeout(messageLockTimer);
@@ -157,7 +248,6 @@
         }
         messages.textContent = text;
         messages.style.color = isError ? 'darkred' : '';
-        // lock message for 600ms so "Heard: ..." doesn't instantly overwrite
         messageLockTimer = setTimeout(() => {
             messageLockTimer = null;
         }, 600);
@@ -169,11 +259,9 @@
     }
 
     function updateUI() {
-        listeningText.textContent = listening ? 'listening' : 'stopped';
-        toggleListenBtn.textContent = listening ? 'Stop Listening' : 'Start Listening';
+        listeningText.textContent = listening ? 'active' : 'stopped';
     }
 
-    // load list of saved recordings
     async function loadRecordings() {
         recordingsList.innerHTML = '<div class="text-muted">Loading...</div>';
         try {
@@ -188,14 +276,14 @@
                 const div = document.createElement('div');
                 div.className = 'list-group-item';
                 div.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>${item.name}</div>
-                    <div>
-                        <a class="btn btn-sm btn-outline-secondary me-2" href="${item.url}">Download</a>
-                    </div>
-                </div>
-                <audio controls src="${item.url}"></audio>
-            `;
+        <div class="d-flex justify-content-between align-items-center">
+            <div>${item.name}</div>
+            <div>
+                <a class="btn btn-sm btn-outline-secondary me-2" href="${item.url}">Download</a>
+            </div>
+        </div>
+        <audio controls src="${item.url}"></audio>
+    `;
                 recordingsList.appendChild(div);
             }
         } catch (err) {
@@ -203,7 +291,6 @@
         }
     }
 
-    // Speech recognition setup
     function createRecognition() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return null;
@@ -221,12 +308,32 @@
         r.onerror = (e) => {
             console.error('SpeechRecognition error', e);
             showMessage('Speech recognition error: ' + (e.error || 'unknown'), true);
+            // The onend event will fire after an error, which will handle restart logic.
         };
         r.onend = () => {
+            const wasListening = listening;
             listening = false;
+            if (recognition) {
+                recognition = null;
+            }
             updateUI();
             stopAggressionMonitor();
-            showMessage('Speech recognition stopped.');
+
+            if (isPausingForTrigger) {
+                showMessage('Listening paused to record new trigger.');
+                return; // Don't restart, we paused intentionally.
+            }
+
+            if (wasListening) {
+                console.log('Recognition service ended. Restarting in 1 second...');
+                maybeShowMessage('Listener connection lost. Reconnecting...');
+                setTimeout(() => {
+                    startRecognition().catch(err => {
+                        console.error('Failed to auto-restart recognition', err);
+                        showMessage('Failed to auto-restart listening: ' + (err.message || err), true);
+                    });
+                }, 1000);
+            }
         };
         r.onresult = (event) => {
             for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -243,6 +350,10 @@
     }
 
     async function startRecognition() {
+        if (listening || recognition) {
+            console.warn("startRecognition called while already active. Aborting.");
+            return;
+        }
         if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
             showMessage('Web Speech API not available in this browser. Use Chrome/Edge (Chromium).', true);
             return;
@@ -260,24 +371,20 @@
         }
         try {
             recognition.start();
-            if (!triggerWord) {
-                showMessage('Listening for built-in safety keywords and tone cues (no custom trigger set).');
+            if (triggerWords.length === 0) {
+                showMessage('Listening for built-in safety keywords and tone cues (no custom triggers set).');
             }
         } catch (err) {
             console.warn('recognition.start error', err);
+            // onend should fire and handle this
         }
     }
 
     function stopRecognition() {
         if (recognition) {
-            recognition.onresult = null;
-            recognition.onend = null;
-            try { recognition.stop(); } catch { }
-            recognition = null;
+            // The onend handler will take care of all cleanup and state changes.
+            recognition.stop();
         }
-        listening = false;
-        updateUI();
-        stopAggressionMonitor();
     }
 
     async function ensureMonitorStream() {
@@ -302,14 +409,7 @@
         const analyser = ctx.createAnalyser();
         analyser.fftSize = 512;
         const data = new Uint8Array(analyser.fftSize);
-        const monitorState = {
-            ctx,
-            source,
-            analyser,
-            data,
-            framesAbove: 0,
-            rafId: null
-        };
+        const monitorState = { ctx, source, analyser, data, framesAbove: 0, rafId: null };
 
         const monitorLoop = () => {
             analyser.getByteTimeDomainData(data);
@@ -373,12 +473,18 @@
 
         console.debug('Normalized transcript:', normalized);
 
-        if (triggerWordNormalized && normalized.includes(triggerWordNormalized)) {
-            console.debug('Matched custom trigger:', triggerWordNormalized);
-            triggerRecording(`Trigger word "${triggerWord}" detected`);
-            return;
+        // Check for custom trigger words
+        for (let i = 0; i < triggerWordsNormalized.length; i++) {
+            const triggerNorm = triggerWordsNormalized[i];
+            if (normalized.includes(triggerNorm)) {
+                const originalTrigger = triggerWords[i];
+                console.debug('Matched custom trigger:', originalTrigger);
+                triggerRecording(`Trigger word "${originalTrigger}" detected`);
+                return;
+            }
         }
 
+        // Check for built-in threat phrases
         for (const phrase of THREAT_PHRASES) {
             if (normalized.includes(phrase)) {
                 console.debug('Matched threat phrase:', phrase);
@@ -387,6 +493,7 @@
             }
         }
 
+        // Check for built-in threat tokens
         const tokens = new Set(normalized.split(' '));
         for (const token of THREAT_TOKENS) {
             if (tokens.has(token)) {
@@ -417,7 +524,6 @@
         setTimeout(() => { threatCooldownActive = false; }, THREAT_COOLDOWN_MS);
     }
 
-    // Recording logic: start MediaRecorder for exactly 60 seconds
     async function startRecordingFor60s() {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
             showMessage('Media devices API not available.', true);
@@ -458,7 +564,6 @@
                 const filenameBase = `recording`;
                 const file = new File([blob], `${filenameBase}.webm`, { type: 'audio/webm' });
 
-                // upload to server
                 const fd = new FormData();
                 fd.append('file', file, file.name);
                 showMessage('Uploading recording...');
@@ -478,7 +583,6 @@
 
             mediaRecorder.start();
 
-            // Stop after exact duration
             setTimeout(() => {
                 if (mediaRecorder && mediaRecorder.state === 'recording') {
                     mediaRecorder.stop();
@@ -491,7 +595,6 @@
         }
     }
 
-    // Countdown UI
     function startCountdown(seconds) {
         countdownRemaining = seconds;
         countdownEl.textContent = `(${countdownRemaining}s)`;
@@ -509,20 +612,22 @@
         countdownEl.textContent = '';
     }
 
-    // On load
     (async function init() {
-        // request mic perms early
+        loadTriggersFromStorage();
         await requestMic();
-        // load recordings
         await loadRecordings();
-        // show message about browser support
         if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
             showMessage('Note: Continuous speech recognition requires Web Speech API. Use Chrome/Edge (Chromium).', true);
         }
+        // NEW: Auto-start listening
+        startRecognition().catch(err => {
+            console.error('Failed to start recognition on load', err);
+            showMessage('Failed to start listening automatically: ' + (err.message || err), true);
+        });
     })();
 
-    // Ensure we stop recognition when the page unloads
     window.addEventListener('beforeunload', () => {
+        isPausingForTrigger = true; // Prevent restart on page close
         stopRecognition();
         stopAggressionMonitor();
     });
