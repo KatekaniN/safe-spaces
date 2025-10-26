@@ -14,6 +14,7 @@ import {
   orderBy,
   collectionGroup,
   writeBatch,
+  GeoPoint,
 } from "firebase/firestore";
 
 export type UserProfile = {
@@ -478,6 +479,197 @@ export async function addToWaitlist(
   return ref.id;
 }
 
+// Police Stations (for routing panic alerts)
+export type PoliceStation = {
+  id: string;
+  name: string;
+  location: { lat: number; lng: number };
+  phone?: string;
+  email?: string;
+  serviceRadiusKm?: number;
+  address?: string;
+};
+
+export type PoliceStationSeed = Omit<PoliceStation, "id"> & { id: string };
+
+export async function listPoliceStations(): Promise<PoliceStation[]> {
+  const snap = await getDocs(collection(db, "policeStations"));
+  return snap.docs
+    .map((docSnap) => {
+      const data = docSnap.data() as Record<string, any> | undefined;
+      if (!data) return null;
+      const loc = data.location;
+      let location: { lat: number; lng: number } | null = null;
+      if (loc && typeof loc === "object") {
+        if (typeof loc.lat === "number" && typeof loc.lng === "number") {
+          location = { lat: loc.lat, lng: loc.lng };
+        } else if (
+          typeof (loc as any).latitude === "number" &&
+          typeof (loc as any).longitude === "number"
+        ) {
+          location = {
+            lat: (loc as any).latitude,
+            lng: (loc as any).longitude,
+          };
+        }
+      }
+      if (!location) return null;
+      return {
+        id: docSnap.id,
+        name: typeof data.name === "string" ? data.name : "Unnamed station",
+        location,
+        phone: typeof data.phone === "string" ? data.phone : undefined,
+        email: typeof data.email === "string" ? data.email : undefined,
+        serviceRadiusKm:
+          typeof data.serviceRadiusKm === "number"
+            ? data.serviceRadiusKm
+            : undefined,
+        address: typeof data.address === "string" ? data.address : undefined,
+      } as PoliceStation;
+    })
+    .filter((v): v is PoliceStation => v !== null);
+}
+
+export async function upsertPoliceStations(
+  stations: PoliceStationSeed[]
+): Promise<void> {
+  if (!stations.length) return;
+  const batch = writeBatch(db);
+  for (const station of stations) {
+    const ref = doc(db, "policeStations", station.id);
+    const payload = removeUndefined({
+      name: station.name,
+      phone: station.phone,
+      email: station.email,
+      serviceRadiusKm: station.serviceRadiusKm,
+      address: station.address,
+      location: new GeoPoint(station.location.lat, station.location.lng),
+    });
+    batch.set(ref, payload, { merge: true });
+  }
+  await batch.commit();
+}
+
+export function pickNearestStation(
+  stations: PoliceStation[],
+  point: { lat: number; lng: number } | null
+): (PoliceStation & { distanceKm: number }) | null {
+  if (!point || stations.length === 0) return null;
+  let bestWithin: (PoliceStation & { distanceKm: number }) | null = null;
+  let bestOverall: (PoliceStation & { distanceKm: number }) | null = null;
+
+  for (const st of stations) {
+    const distanceKm = haversineKm(point, st.location);
+    if (!bestOverall || distanceKm < bestOverall.distanceKm) {
+      bestOverall = { ...st, distanceKm };
+    }
+    if (st.serviceRadiusKm === undefined || distanceKm <= st.serviceRadiusKm) {
+      if (!bestWithin || distanceKm < bestWithin.distanceKm) {
+        bestWithin = { ...st, distanceKm };
+      }
+    }
+  }
+
+  return bestWithin ?? bestOverall;
+}
+
+// Panic Alerts
+export type PanicAlertStatus = "open" | "acknowledged" | "resolved";
+
+export type PanicAlert = {
+  id?: string;
+  uid: string;
+  createdAt?: any;
+  status: PanicAlertStatus;
+  location?: { lat: number; lng: number };
+  nearestStation?: {
+    id: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    distanceKm?: number;
+  };
+  userSnapshot?: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    province?: Province;
+  };
+  responderUid?: string;
+  responderNotes?: string;
+  respondedAt?: any;
+  resolvedAt?: any;
+};
+
+export async function createPanicAlert(
+  payload: Omit<PanicAlert, "id" | "createdAt" | "status"> & {
+    status?: PanicAlertStatus;
+  }
+) {
+  const sanitizedNearest = payload.nearestStation
+    ? removeUndefined(payload.nearestStation)
+    : undefined;
+  const sanitizedSnapshot = payload.userSnapshot
+    ? removeUndefined(payload.userSnapshot)
+    : undefined;
+
+  const base = removeUndefined({
+    ...payload,
+    nearestStation: sanitizedNearest,
+    userSnapshot: sanitizedSnapshot,
+    status: payload.status ?? "open",
+    createdAt: serverTimestamp(),
+  });
+  const ref = doc(collection(db, "panicAlerts"));
+  const batch = writeBatch(db);
+  batch.set(ref, base);
+  batch.set(doc(db, "users", payload.uid, "panicAlerts", ref.id), base);
+  await batch.commit();
+  return ref.id;
+}
+
+export async function updatePanicAlert(
+  id: string,
+  changes: Partial<Omit<PanicAlert, "id" | "createdAt" | "uid">>,
+  uid?: string
+) {
+  const clean = removeUndefined(changes);
+  const payload = {
+    ...clean,
+    ...(clean.status === "acknowledged" && !clean.respondedAt
+      ? { respondedAt: serverTimestamp() }
+      : {}),
+    ...(clean.status === "resolved" && !clean.resolvedAt
+      ? { resolvedAt: serverTimestamp() }
+      : {}),
+    updatedAt: serverTimestamp(),
+  };
+  const batch = writeBatch(db);
+  batch.update(doc(db, "panicAlerts", id), payload);
+  if (uid) {
+    batch.update(doc(db, "users", uid, "panicAlerts", id), payload);
+  }
+  await batch.commit();
+}
+
+function haversineKm(
+  a: { lat: number; lng: number },
+  b: { lat: number; lng: number }
+): number {
+  const R = 6371; // km
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+  const dLat = toRad(b.lat - a.lat);
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const sinDLat = Math.sin(dLat / 2);
+  const sinDLng = Math.sin(dLng / 2);
+  const h =
+    sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLng * sinDLng;
+  const c = 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  return R * c;
+}
+
 // Utility: remove keys with undefined values (Firestore rejects undefined)
 function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
   const out: Partial<T> = {};
@@ -486,3 +678,34 @@ function removeUndefined<T extends Record<string, any>>(obj: T): Partial<T> {
   }
   return out;
 }
+
+// Example usage (should live in src/hooks/useSafetyMonitor.ts, not in this lib file)
+/*
+if (user?.uid) {
+  try {
+    const profile = await getUserProfile(user.uid);
+    const station = await findNearestStation(geoRef.current);
+    await createPanicAlert({
+      uid: user.uid,
+      location: geoRef.current || undefined,
+      nearestStation: station
+        ? {
+            id: station.id,
+            name: station.name,
+            phone: station.phone,
+            email: station.email,
+            distanceKm: station.distanceKm,
+          }
+        : undefined,
+      userSnapshot: {
+        name: profile?.preferredName || profile?.name,
+        phone: profile?.phone,
+        email: profile?.email,
+        province: profile?.province,
+      },
+    });
+  } catch (err) {
+    console.warn("Failed to publish panic alert", err);
+  }
+}
+*/

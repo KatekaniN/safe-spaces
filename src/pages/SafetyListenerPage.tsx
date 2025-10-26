@@ -21,6 +21,9 @@ export default function SafetyListenerPage() {
     isTriggerRecording,
     statusMessage,
     countdown,
+    activeAlertStatus,
+    alertNotification,
+    dismissAlertNotification,
     triggerWords,
     addTrigger,
     deleteTrigger,
@@ -31,6 +34,36 @@ export default function SafetyListenerPage() {
   } = useSafetyMonitor({ onUploadSuccess: () => navigate("/recordings") });
 
   const [manualTrigger, setManualTrigger] = useState("");
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [persistedNotification, setPersistedNotification] = useState<
+    string | null
+  >(null);
+  const hasUnreadNotification = Boolean(alertNotification);
+
+  useEffect(() => {
+    if (alertNotification) {
+      setPersistedNotification(alertNotification);
+      setNotificationOpen(false);
+    }
+  }, [alertNotification]);
+
+  useEffect(() => {
+    if (activeAlertStatus === "open" && !alertNotification) {
+      setPersistedNotification(null);
+      setNotificationOpen(false);
+    }
+  }, [activeAlertStatus, alertNotification]);
+
+  const handleNotificationClick = () => {
+    if (!persistedNotification) return;
+    setNotificationOpen((prev) => {
+      const next = !prev;
+      if (!prev) {
+        dismissAlertNotification();
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (startFlag === "1") {
@@ -52,7 +85,14 @@ export default function SafetyListenerPage() {
       }}
     >
       <div style={{ maxWidth: 640, width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
+        <div
+          style={{
+            position: "relative",
+            textAlign: "center",
+            marginBottom: 16,
+            paddingRight: persistedNotification ? 56 : 0,
+          }}
+        >
           <h1
             style={{
               color: BRAND.purple,
@@ -65,7 +105,91 @@ export default function SafetyListenerPage() {
             Emergency Mode
           </h1>
           {statusMessage && (
-            <div style={{ color: "#374151", fontSize: 14 }}>{statusMessage}</div>
+            <div style={{ color: "#374151", fontSize: 14 }}>
+              {statusMessage}
+            </div>
+          )}
+          {persistedNotification && (
+            <>
+              <button
+                type="button"
+                onClick={handleNotificationClick}
+                aria-label={
+                  notificationOpen
+                    ? "Hide emergency notification"
+                    : "Show emergency notification"
+                }
+                title="Notifications"
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  right: 0,
+                  width: 44,
+                  height: 44,
+                  borderRadius: "50%",
+                  border: `2px solid ${BRAND.pink}`,
+                  background: notificationOpen ? BRAND.pink : "#fff",
+                  color: notificationOpen ? "#fff" : BRAND.pink,
+                  display: "grid",
+                  placeItems: "center",
+                  cursor: "pointer",
+                  boxShadow: notificationOpen
+                    ? "0 8px 16px rgba(236,150,190,0.35)"
+                    : "0 4px 10px rgba(236,150,190,0.25)",
+                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                }}
+              >
+                <span aria-hidden="true" style={{ fontSize: 20 }}>
+                  🔔
+                </span>
+                {hasUnreadNotification && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 9,
+                      width: 10,
+                      height: 10,
+                      borderRadius: "50%",
+                      background: "#EF4444",
+                      border: "2px solid #fff",
+                    }}
+                  />
+                )}
+              </button>
+              {notificationOpen && persistedNotification && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 10px)",
+                    right: 0,
+                    background: "#fff",
+                    borderRadius: 12,
+                    border: `1.5px solid ${BRAND.pink}`,
+                    boxShadow: "0 12px 28px rgba(0,0,0,0.12)",
+                    padding: "12px 14px",
+                    minWidth: 220,
+                    maxWidth: 280,
+                    textAlign: "left",
+                    color: "#374151",
+                    fontSize: 14,
+                    zIndex: 10,
+                  }}
+                >
+                  <strong
+                    style={{
+                      display: "block",
+                      color: BRAND.purple,
+                      marginBottom: 4,
+                      fontSize: 13,
+                    }}
+                  >
+                    Notification
+                  </strong>
+                  <span>{persistedNotification}</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -137,18 +261,23 @@ export default function SafetyListenerPage() {
               </div>
             )}
             <div style={{ color: "#6B7280", fontSize: 13 }}>
-              Listener: {isListening ? "on" : "off"} · Trigger capture: {isTriggerRecording ? "recording" : "idle"}
+              Listener: {isListening ? "on" : "off"} · Trigger capture:{" "}
+              {isTriggerRecording ? "recording" : "idle"}
             </div>
           </div>
 
           <div style={{ borderTop: "1px solid #F3F4F6", margin: "4px 0" }} />
 
           <div style={{ display: "grid", gap: 12 }}>
-            <strong style={{ color: "#1F2937", fontSize: 15 }}>Trigger words</strong>
+            <strong style={{ color: "#1F2937", fontSize: 15 }}>
+              Trigger words
+            </strong>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={isTriggerRecording ? stopRecordTrigger : startRecordTrigger}
+                onClick={
+                  isTriggerRecording ? stopRecordTrigger : startRecordTrigger
+                }
                 style={{
                   padding: "10px 12px",
                   borderRadius: 12,

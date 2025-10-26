@@ -3,10 +3,15 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   CrimeReport,
   Incident,
+  PanicAlert,
+  PanicAlertStatus,
   updateCrimeReport,
+  updatePanicAlert,
+  upsertPoliceStations,
   getUserProfile,
   UserProfile,
 } from "../lib/data";
+import { DEMO_POLICE_STATIONS } from "../lib/policeStationsSeed";
 import { db } from "../lib/firebase";
 import {
   collection,
@@ -19,6 +24,7 @@ import {
 const BRAND = {
   purple: "#8764C1",
   pink: "#EC96BE",
+  blue: "#87A5DC",
   gray: "#6B7280",
   border: "#E5E7EB",
   bg: "#FAFAFA",
@@ -31,16 +37,20 @@ export default function AdminPage() {
   const [incidents, setIncidents] = React.useState<
     (Incident & { uid?: string })[]
   >([]);
+  const [panicAlerts, setPanicAlerts] = React.useState<PanicAlert[]>([]);
+  const [seedBusy, setSeedBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
 
   React.useEffect(() => {
     let unsub1: undefined | (() => void);
     let unsub2: undefined | (() => void);
+    let unsub3: undefined | (() => void);
     let loaded1 = false;
     let loaded2 = false;
+    let loaded3 = false;
     const maybeDone = () => {
-      if (loaded1 && loaded2) setLoading(false);
+      if (loaded1 && loaded2 && loaded3) setLoading(false);
     };
 
     async function init() {
@@ -59,6 +69,7 @@ export default function AdminPage() {
         if (!hasAccess) {
           loaded1 = true;
           loaded2 = true;
+          loaded3 = true;
           maybeDone();
           return;
         }
@@ -163,10 +174,33 @@ export default function AdminPage() {
             maybeDone();
           }
         );
+
+        const q3 = query(
+          collection(db, "panicAlerts"),
+          orderBy("createdAt", "desc")
+        );
+        unsub3 = onSnapshot(
+          q3,
+          (snap) => {
+            const list: PanicAlert[] = snap.docs.map((d) => ({
+              id: d.id,
+              ...(d.data() as PanicAlert),
+            }));
+            setPanicAlerts(list);
+            loaded3 = true;
+            maybeDone();
+          },
+          (err) => {
+            setError(err?.message || "Failed to subscribe to panic alerts");
+            loaded3 = true;
+            maybeDone();
+          }
+        );
       } catch (e: any) {
         setError(e?.message || "Failed to initialize admin subscriptions");
         loaded1 = true;
         loaded2 = true;
+        loaded3 = true;
         maybeDone();
       }
     }
@@ -175,6 +209,7 @@ export default function AdminPage() {
     return () => {
       if (unsub1) unsub1();
       if (unsub2) unsub2();
+      if (unsub3) unsub3();
     };
   }, [user]);
 
@@ -208,6 +243,60 @@ export default function AdminPage() {
     } catch (e) {
       console.error(e);
       alert("Failed to update triage status");
+    }
+  }
+
+  async function acknowledgeAlert(alert: PanicAlert) {
+    if (!alert.id) return;
+    try {
+      await updatePanicAlert(
+        alert.id,
+        {
+          status: "acknowledged",
+          responderUid: user?.uid,
+        },
+        alert.uid
+      );
+    } catch (e) {
+      console.error(e);
+      alertUser("Failed to acknowledge alert");
+    }
+  }
+
+  async function resolveAlert(alert: PanicAlert) {
+    if (!alert.id) return;
+    try {
+      await updatePanicAlert(
+        alert.id,
+        {
+          status: "resolved",
+          responderUid: user?.uid,
+        },
+        alert.uid
+      );
+    } catch (e) {
+      console.error(e);
+      alertUser("Failed to resolve alert");
+    }
+  }
+
+  function alertUser(message: string) {
+    if (typeof window !== "undefined") {
+      window.alert(message);
+    }
+  }
+
+  async function seedStations() {
+    if (seedBusy) return;
+    try {
+      setSeedBusy(true);
+      await upsertPoliceStations(DEMO_POLICE_STATIONS);
+      alertUser("Seeded demo police stations.");
+    } catch (e) {
+      console.error(e);
+      alertUser("Failed to seed police stations");
+    } finally {
+      setSeedBusy(false);
     }
   }
 
@@ -364,6 +453,144 @@ export default function AdminPage() {
           </section>
 
           <section>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 12,
+                flexWrap: "wrap",
+                margin: "0 0 12px",
+              }}
+            >
+              <h2 style={{ margin: 0 }}>
+                Live Panic Alerts ({panicAlerts.length})
+              </h2>
+              {hasAccess && (
+                <button
+                  onClick={seedStations}
+                  style={btnOutline(BRAND.purple)}
+                  disabled={seedBusy}
+                >
+                  {seedBusy ? "Seeding…" : "Seed Demo Stations"}
+                </button>
+              )}
+            </div>
+            <div
+              style={{
+                display: "grid",
+                gap: 12,
+                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              }}
+            >
+              {panicAlerts.map((alert) => {
+                const createdAt = formatTimestamp(alert.createdAt);
+                const respondedAt = formatTimestamp(alert.respondedAt);
+                const resolvedAt = formatTimestamp(alert.resolvedAt);
+                return (
+                  <div
+                    key={alert.id}
+                    style={{
+                      border: `1.5px solid ${BRAND.border}`,
+                      borderRadius: 12,
+                      background: "#fff",
+                      padding: 12,
+                      display: "grid",
+                      gap: 8,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        gap: 8,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <strong style={{ color: BRAND.pink }}>Panic Alert</strong>
+                      <span style={chip(chipColor(alert.status))}>
+                        {alert.status}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: BRAND.gray }}>
+                      Created: {createdAt || "Unknown"}
+                    </div>
+                    {respondedAt && (
+                      <div style={{ fontSize: 13, color: BRAND.gray }}>
+                        Acknowledged: {respondedAt}
+                      </div>
+                    )}
+                    {resolvedAt && (
+                      <div style={{ fontSize: 13, color: BRAND.gray }}>
+                        Resolved: {resolvedAt}
+                      </div>
+                    )}
+                    {alert.location && (
+                      <div style={{ fontSize: 13 }}>
+                        Location: {alert.location.lat.toFixed(4)},{" "}
+                        {alert.location.lng.toFixed(4)}
+                      </div>
+                    )}
+                    {alert.nearestStation && (
+                      <div style={{ fontSize: 13 }}>
+                        Station: {alert.nearestStation.name}
+                        {alert.nearestStation.distanceKm !== undefined && (
+                          <span>
+                            {" "}
+                            • {alert.nearestStation.distanceKm.toFixed(1)}
+                            km
+                          </span>
+                        )}
+                        {alert.nearestStation.phone && (
+                          <div>📞 {alert.nearestStation.phone}</div>
+                        )}
+                        {alert.nearestStation.email && (
+                          <div>✉️ {alert.nearestStation.email}</div>
+                        )}
+                      </div>
+                    )}
+                    {alert.userSnapshot && (
+                      <div style={{ fontSize: 13 }}>
+                        User: {alert.userSnapshot.name || "Unknown"}
+                        {alert.userSnapshot.phone && (
+                          <div>📱 {alert.userSnapshot.phone}</div>
+                        )}
+                        {alert.userSnapshot.email && (
+                          <div>✉️ {alert.userSnapshot.email}</div>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      {alert.status === "open" && (
+                        <button
+                          onClick={() => acknowledgeAlert(alert)}
+                          style={btnSolid(BRAND.pink)}
+                        >
+                          Acknowledge
+                        </button>
+                      )}
+                      {alert.status !== "resolved" && (
+                        <button
+                          onClick={() => resolveAlert(alert)}
+                          style={btnOutline(BRAND.purple)}
+                        >
+                          Mark Resolved
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {panicAlerts.length === 0 && (
+                <div style={{ color: BRAND.gray, fontSize: 14 }}>
+                  No panic alerts yet.
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section>
             <h2 style={{ margin: "0 0 12px" }}>
               User Incident Logs ({incidents.length})
             </h2>
@@ -473,4 +700,35 @@ function btnOutline(color: string): React.CSSProperties {
     border: `1.5px solid ${color}`,
     color,
   } as React.CSSProperties;
+}
+
+function btnSolid(color: string): React.CSSProperties {
+  return {
+    ...btnBase(),
+    border: `1.5px solid ${color}`,
+    background: color,
+    color: "#fff",
+  } as React.CSSProperties;
+}
+
+function formatTimestamp(value: any): string | null {
+  if (!value) return null;
+  const maybeDate =
+    typeof value?.toDate === "function" ? value.toDate() : value;
+  const date = maybeDate instanceof Date ? maybeDate : new Date(maybeDate);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleString();
+}
+
+function chipColor(status: PanicAlertStatus): string {
+  switch (status) {
+    case "open":
+      return BRAND.pink;
+    case "acknowledged":
+      return BRAND.blue;
+    case "resolved":
+      return "#10B981";
+    default:
+      return "#E5E7EB";
+  }
 }

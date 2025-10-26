@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function userRole(uid) {
+      return userDoc(uid).data.role;
+    }
+
+    function hasResponseRole() {
+      return isSignedIn() &&
+        (userRole(request.auth.uid) in ['admin', 'law', 'security'] ||
+         userDoc(request.auth.uid).data.isAdmin == true ||
+         userDoc(request.auth.uid).data.canAccessAdmin == true);
+    }
+
+    // policeStations: readable by everyone, write restricted to response roles
+    match /policeStations/{stationId} {
+      allow read: if true;
+      allow create, update, delete: if hasResponseRole();
+    }
+
+    // Global panic alerts collection
+    match /panicAlerts/{alertId} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read, update: if hasResponseRole();
+      allow delete: if false;
+    }
+
+    // Per-user panic alerts history
+    match /users/{uid}/panicAlerts/{alertId} {
+      allow read: if isSignedIn() && request.auth.uid == uid;
+      allow create: if isSignedIn() && request.auth.uid == uid;
+      allow update: if hasResponseRole();
+      allow delete: if false;
+    }
+
+    // Existing user document rules (fallback)
+    match /users/{uid}/{document=**} {
+      allow read, write: if false; // Preserve existing project rules here.
+    }
+
+    // Fallback deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
