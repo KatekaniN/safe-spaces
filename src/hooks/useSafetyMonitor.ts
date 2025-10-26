@@ -72,8 +72,8 @@ export function useSafetyMonitor(opts: Options = {}) {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       }
-    } catch {}
-    finally {
+    } catch {
+    } finally {
       setIsRecording(false);
       setCountdown(emergencyDurationSec);
     }
@@ -89,7 +89,10 @@ export function useSafetyMonitor(opts: Options = {}) {
         if (navigator.geolocation) {
           navigator.geolocation.getCurrentPosition(
             (pos) => {
-              geoRef.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+              geoRef.current = {
+                lat: pos.coords.latitude,
+                lng: pos.coords.longitude,
+              };
             },
             () => {
               geoRef.current = null;
@@ -113,7 +116,12 @@ export function useSafetyMonitor(opts: Options = {}) {
           await saveRecording(blob, name);
           if (user?.uid) {
             try {
-              await uploadRecordingToCloud(user.uid, blob, name, geoRef.current);
+              await uploadRecordingToCloud(
+                user.uid,
+                blob,
+                name,
+                geoRef.current
+              );
             } catch (e) {
               // cloud upload failed; local save still exists
             }
@@ -177,7 +185,9 @@ export function useSafetyMonitor(opts: Options = {}) {
     } catch {}
     recRef.current = rec;
     return () => {
-      try { rec.stop(); } catch {}
+      try {
+        rec.stop();
+      } catch {}
       recRef.current = null;
     };
   }, [startEmergency, triggerWords, supportsSpeech]);
@@ -202,12 +212,18 @@ export function useSafetyMonitor(opts: Options = {}) {
       setIsTriggerRecording(false);
     };
     once.onend = () => setIsTriggerRecording(false);
-    try { once.start(); } catch { setIsTriggerRecording(false); }
+    try {
+      once.start();
+    } catch {
+      setIsTriggerRecording(false);
+    }
     recRef.current = once;
   }, [addTrigger, supportsSpeech]);
 
   const stopRecordTrigger = useCallback(() => {
-    try { (recRef.current as any)?.stop?.(); } catch {}
+    try {
+      (recRef.current as any)?.stop?.();
+    } catch {}
     setIsTriggerRecording(false);
   }, []);
 

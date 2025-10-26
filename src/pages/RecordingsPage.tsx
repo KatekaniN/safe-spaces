@@ -149,9 +149,15 @@ export default function RecordingsPage() {
               value={passInput}
               onChange={(e) => setPassInput(e.target.value)}
               placeholder="Password"
-              style={{ border: "1.5px solid #E5E7EB", borderRadius: 12, padding: 12 }}
+              style={{
+                border: "1.5px solid #E5E7EB",
+                borderRadius: 12,
+                padding: 12,
+              }}
             />
-            {error && <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>}
+            {error && (
+              <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>
+            )}
             <button
               onClick={handleUnlock}
               style={{
@@ -204,16 +210,26 @@ export default function RecordingsPage() {
               value={passInput}
               onChange={(e) => setPassInput(e.target.value)}
               placeholder="New password"
-              style={{ border: "1.5px solid #E5E7EB", borderRadius: 12, padding: 12 }}
+              style={{
+                border: "1.5px solid #E5E7EB",
+                borderRadius: 12,
+                padding: 12,
+              }}
             />
             <input
               type="password"
               value={passConfirm}
               onChange={(e) => setPassConfirm(e.target.value)}
               placeholder="Confirm password"
-              style={{ border: "1.5px solid #E5E7EB", borderRadius: 12, padding: 12 }}
+              style={{
+                border: "1.5px solid #E5E7EB",
+                borderRadius: 12,
+                padding: 12,
+              }}
             />
-            {error && <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>}
+            {error && (
+              <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>
+            )}
             <button
               onClick={handleSetPassword}
               style={{
@@ -275,11 +291,17 @@ export default function RecordingsPage() {
           {loading ? (
             <div style={{ padding: 16 }}>Loading…</div>
           ) : combinedEmpty ? (
-            <div style={{ padding: 16, color: "#6B7280" }}>No recordings yet.</div>
+            <div style={{ padding: 16, color: "#6B7280" }}>
+              No recordings yet.
+            </div>
           ) : (
             <ul style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {cloudItems.map((it) => {
-                const date = new Date((it as any).createdAt?.toDate?.() || (it as any).createdAt || Date.now());
+                const date = new Date(
+                  (it as any).createdAt?.toDate?.() ||
+                    (it as any).createdAt ||
+                    Date.now()
+                );
                 const pretty = date.toLocaleString();
                 const link = (it as any).downloadUrl as string | undefined;
                 const sizeKB = Math.round(((it as any).size || 0) / 1024);
@@ -304,7 +326,13 @@ export default function RecordingsPage() {
                     >
                       <div style={{ color: "#1F2937", fontWeight: 700 }}>
                         {pretty}
-                        <span style={{ color: "#6B7280", marginLeft: 8, fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "#6B7280",
+                            marginLeft: 8,
+                            fontWeight: 500,
+                          }}
+                        >
                           {sizeKB} KB
                         </span>
                       </div>
@@ -329,7 +357,9 @@ export default function RecordingsPage() {
                         )}
                         {link && navigator.share && (
                           <button
-                            onClick={() => navigator.share({ title: it.name, url: link })}
+                            onClick={() =>
+                              navigator.share({ title: it.name, url: link })
+                            }
                             style={{
                               padding: "8px 10px",
                               borderRadius: 10,
@@ -347,7 +377,9 @@ export default function RecordingsPage() {
                           onClick={async () => {
                             if (!user) return;
                             await deleteCloudRecording(user.uid, it);
-                            setCloudItems((prev) => prev.filter((p) => p.id !== it.id));
+                            setCloudItems((prev) =>
+                              prev.filter((p) => p.id !== it.id)
+                            );
                           }}
                           style={{
                             padding: "8px 10px",
@@ -364,7 +396,12 @@ export default function RecordingsPage() {
                       </div>
                     </div>
                     {link ? (
-                      <audio src={link} preload="metadata" controls style={{ width: "100%" }} />
+                      <audio
+                        src={link}
+                        preload="metadata"
+                        controls
+                        style={{ width: "100%" }}
+                      />
                     ) : null}
                   </li>
                 );
@@ -395,7 +432,13 @@ export default function RecordingsPage() {
                     >
                       <div style={{ color: "#1F2937", fontWeight: 700 }}>
                         {pretty}
-                        <span style={{ color: "#6B7280", marginLeft: 8, fontWeight: 500 }}>
+                        <span
+                          style={{
+                            color: "#6B7280",
+                            marginLeft: 8,
+                            fontWeight: 500,
+                          }}
+                        >
                           {sizeKB} KB
                         </span>
                       </div>
@@ -418,7 +461,9 @@ export default function RecordingsPage() {
                         <button
                           onClick={async () => {
                             await deleteRecording(it.name);
-                            setLocalItems((prev) => prev.filter((p) => p.name !== it.name));
+                            setLocalItems((prev) =>
+                              prev.filter((p) => p.name !== it.name)
+                            );
                           }}
                           style={{
                             padding: "8px 10px",
@@ -434,7 +479,12 @@ export default function RecordingsPage() {
                         </button>
                       </div>
                     </div>
-                    <audio src={url} preload="metadata" controls style={{ width: "100%" }} />
+                    <audio
+                      src={url}
+                      preload="metadata"
+                      controls
+                      style={{ width: "100%" }}
+                    />
                   </li>
                 );
               })}

@@ -219,7 +219,7 @@ export default function Profile() {
     "CompCare",
     "Other",
   ] as const;
-  const [/* medical */, setMedical] = useState<MedicalInfo | null>(null);
+  const [, /* medical */ setMedical] = useState<MedicalInfo | null>(null);
   const [medForm, setMedForm] = useState<Required<MedicalInfo>>({
     bloodType: "O+",
     allergies: [],
@@ -235,7 +235,7 @@ export default function Profile() {
   const [savingMedical, setSavingMedical] = useState(false);
   const [medErrors, setMedErrors] = useState<Record<string, string>>({});
   // Settings state
-  const [/* settings */, setSettings] = useState<UserSettings | null>(null);
+  const [, /* settings */ setSettings] = useState<UserSettings | null>(null);
   const [settingsForm, setSettingsForm] = useState<Required<UserSettings>>({
     notificationsEnabled: true,
     shareLocation: false,
@@ -2484,7 +2484,12 @@ function SpinnerIcon({ color = BRAND.purple }: { color?: string }) {
     </svg>
   );
 }
-function setEditForm(arg0: { name: any; email: any; phone: any; preferredName: any; language: string; }) {
+function setEditForm(arg0: {
+  name: any;
+  email: any;
+  phone: any;
+  preferredName: any;
+  language: string;
+}) {
   throw new Error("Function not implemented.");
 }
-

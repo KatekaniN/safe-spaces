@@ -69,9 +69,23 @@ export async function deleteRecording(name: string): Promise<void> {
 
 // Cloud (Firebase Storage + Firestore metadata)
 import { storage } from "./firebase";
-import { getDownloadURL, ref, uploadBytes, deleteObject } from "firebase/storage";
+import {
+  getDownloadURL,
+  ref,
+  uploadBytes,
+  deleteObject,
+} from "firebase/storage";
 import { db as fsDb } from "./firebase";
-import { addDoc, collection, deleteDoc, doc, getDocs, orderBy, query, serverTimestamp } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  orderBy,
+  query,
+  serverTimestamp,
+} from "firebase/firestore";
 
 export type CloudRecording = {
   id?: string;
@@ -92,7 +106,9 @@ export async function uploadRecordingToCloud(
 ): Promise<CloudRecording> {
   const path = `recordings/${uid}/${name}`;
   const storageRef = ref(storage, path);
-  await uploadBytes(storageRef, blob, { contentType: blob.type || "audio/webm" });
+  await uploadBytes(storageRef, blob, {
+    contentType: blob.type || "audio/webm",
+  });
   const url = await getDownloadURL(storageRef);
   const meta: Omit<CloudRecording, "id"> = {
     name,
@@ -109,7 +125,9 @@ export async function uploadRecordingToCloud(
   return { id: docRef.id, ...meta, createdAt: new Date() as any };
 }
 
-export async function listCloudRecordings(uid: string): Promise<CloudRecording[]> {
+export async function listCloudRecordings(
+  uid: string
+): Promise<CloudRecording[]> {
   const refCol = collection(fsDb, "users", uid, "recordings");
   const q = query(refCol, orderBy("createdAt", "desc"));
   const snap = await getDocs(q);
@@ -121,7 +139,10 @@ export async function listCloudRecordings(uid: string): Promise<CloudRecording[]
   return list;
 }
 
-export async function deleteCloudRecording(uid: string, rec: CloudRecording): Promise<void> {
+export async function deleteCloudRecording(
+  uid: string,
+  rec: CloudRecording
+): Promise<void> {
   const path = rec.storagePath;
   try {
     await deleteObject(ref(storage, path));

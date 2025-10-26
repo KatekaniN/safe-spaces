@@ -65,7 +65,9 @@ export default function SafetyListenerPage() {
             Emergency Mode
           </h1>
           {statusMessage && (
-            <div style={{ color: "#374151", fontSize: 14 }}>{statusMessage}</div>
+            <div style={{ color: "#374151", fontSize: 14 }}>
+              {statusMessage}
+            </div>
           )}
         </div>
 
@@ -137,18 +139,23 @@ export default function SafetyListenerPage() {
               </div>
             )}
             <div style={{ color: "#6B7280", fontSize: 13 }}>
-              Listener: {isListening ? "on" : "off"} · Trigger capture: {isTriggerRecording ? "recording" : "idle"}
+              Listener: {isListening ? "on" : "off"} · Trigger capture:{" "}
+              {isTriggerRecording ? "recording" : "idle"}
             </div>
           </div>
 
           <div style={{ borderTop: "1px solid #F3F4F6", margin: "4px 0" }} />
 
           <div style={{ display: "grid", gap: 12 }}>
-            <strong style={{ color: "#1F2937", fontSize: 15 }}>Trigger words</strong>
+            <strong style={{ color: "#1F2937", fontSize: 15 }}>
+              Trigger words
+            </strong>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"
-                onClick={isTriggerRecording ? stopRecordTrigger : startRecordTrigger}
+                onClick={
+                  isTriggerRecording ? stopRecordTrigger : startRecordTrigger
+                }
                 style={{
                   padding: "10px 12px",
                   borderRadius: 12,

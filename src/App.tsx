@@ -16,12 +16,8 @@ const AppShell = lazy(() => import("./components/AppShell.tsx"));
 const AuthPage = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail.tsx"));
-const SafetyListenerPage = lazy(
-  () => import("./pages/SafetyListenerPage.tsx")
-);
-const RecordingsPage = lazy(
-  () => import("./pages/RecordingsPage.tsx")
-);
+const SafetyListenerPage = lazy(() => import("./pages/SafetyListenerPage.tsx"));
+const RecordingsPage = lazy(() => import("./pages/RecordingsPage.tsx"));
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
