@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { getUserProfile, UserProfile } from "../lib/data";
 import logoUrl from "../assets/safe-spaces.png";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,28 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       : "Switch Safe Space"
     : "Spaces";
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const [profile, setProfile] = React.useState<UserProfile | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadProfile() {
+      try {
+        if (user) {
+          const p = await getUserProfile(user.uid);
+          if (mounted) setProfile(p);
+        } else {
+          setProfile(null);
+        }
+      } catch (e) {
+        // Non-fatal
+        if (mounted) setProfile(null);
+      }
+    }
+    loadProfile();
+    return () => {
+      mounted = false;
+    };
+  }, [user]);
 
   return (
     <div
@@ -87,7 +110,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </Link>
 
           {/* Desktop nav */}
-          <nav style={{ display: isNarrow ? "none" : "flex", alignItems: "center", gap: 8 }}>
+          <nav
+            style={{
+              display: isNarrow ? "none" : "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
             {location.pathname !== "/levels" &&
               location.pathname !== "/" &&
               location.pathname !== "/level1" &&
@@ -148,6 +177,31 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             >
               Profile
             </Link>
+            {(profile?.isAdmin || profile?.canAccessAdmin) && (
+              <Link
+                to="/admin"
+                style={{
+                  textDecoration: "none",
+                  color: "#8764C1",
+                  fontWeight: 700,
+                  padding: "8px 14px",
+                  borderRadius: 10,
+                  border: "1.5px solid #8764C1",
+                  background: "transparent",
+                  transition: "all 0.2s ease",
+                  whiteSpace: "nowrap",
+                  fontSize: 16,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(135,100,193,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                Admin
+              </Link>
+            )}
           </nav>
           {/* Right side: hamburger on mobile, sign out on desktop */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -182,7 +236,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 cursor: "pointer",
               }}
             >
-              <span style={{ width: 18, height: 2, background: "#374151", display: "block", boxShadow: "0 6px 0 #374151, 0 -6px 0 #374151" }} />
+              <span
+                style={{
+                  width: 18,
+                  height: 2,
+                  background: "#374151",
+                  display: "block",
+                  boxShadow: "0 6px 0 #374151, 0 -6px 0 #374151",
+                }}
+              />
             </button>
           </div>
         </div>
@@ -209,23 +271,91 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           role="dialog"
           aria-modal="true"
           onClick={() => setMenuOpen(false)}
-          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", zIndex: 50 }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.4)",
+            zIndex: 50,
+          }}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ position: "absolute", right: 0, top: 0, bottom: 0, width: "80%", maxWidth: 360, background: "#fff", borderLeft: "1px solid #E5E7EB", padding: 16, display: "grid", alignContent: "start", gap: 8 }}
+            style={{
+              position: "absolute",
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: "80%",
+              maxWidth: 320,
+              background: "#FAFAFA",
+              borderLeft: "2px solid #E5E7EB",
+              padding: "20px 16px",
+              display: "grid",
+              alignContent: "start",
+              gap: 12,
+            }}
           >
-            <button onClick={() => setMenuOpen(false)} style={{ justifySelf: "end", border: "1.5px solid #E5E7EB", background: "#fff", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>Close</button>
-            <MenuLink to="/" label="Home" onNavigate={() => setMenuOpen(false)} />
+            <button
+              onClick={() => setMenuOpen(false)}
+              style={{
+                justifySelf: "end",
+                border: "1.5px solid #8764C1",
+                background: "transparent",
+                color: "#8764C1",
+                borderRadius: 10,
+                padding: "8px 12px",
+                cursor: "pointer",
+                fontWeight: 700,
+                fontSize: 14,
+              }}
+            >
+              Close
+            </button>
+            <MenuLink
+              to="/"
+              label="Home"
+              onNavigate={() => setMenuOpen(false)}
+            />
             {location.pathname !== "/levels" && (
-              <MenuLink to="/levels" label={levelsLinkLabel} onNavigate={() => setMenuOpen(false)} />
+              <MenuLink
+                to="/levels"
+                label={levelsLinkLabel}
+                onNavigate={() => setMenuOpen(false)}
+              />
             )}
-            <MenuLink to="/profile" label="Profile" onNavigate={() => setMenuOpen(false)} />
+            <MenuLink
+              to="/profile"
+              label="Profile"
+              onNavigate={() => setMenuOpen(false)}
+            />
+            {(profile?.isAdmin || profile?.canAccessAdmin) && (
+              <MenuLink
+                to="/admin"
+                label="Admin"
+                onNavigate={() => setMenuOpen(false)}
+              />
+            )}
             {!loading && user && (
               <button
-                onClick={async () => { await signOut(); setMenuOpen(false); navigate("/auth"); }}
-                style={{ border: "1.5px solid #E5E7EB", background: "#fff", borderRadius: 10, padding: "10px 12px", textAlign: "left", fontWeight: 700, color: "#111827" }}
-              >Sign out</button>
+                onClick={async () => {
+                  await signOut();
+                  setMenuOpen(false);
+                  navigate("/auth");
+                }}
+                style={{
+                  border: "1.5px solid #EC96BE",
+                  background: "#fff",
+                  borderRadius: 12,
+                  padding: "14px 16px",
+                  textAlign: "left",
+                  fontWeight: 700,
+                  fontSize: 15,
+                  color: "#EC96BE",
+                  cursor: "pointer",
+                }}
+              >
+                Sign out
+              </button>
             )}
           </div>
         </div>
@@ -234,12 +364,30 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function MenuLink({ to, label, onNavigate }: { to: string; label: string; onNavigate: () => void }) {
+function MenuLink({
+  to,
+  label,
+  onNavigate,
+}: {
+  to: string;
+  label: string;
+  onNavigate: () => void;
+}) {
   return (
     <Link
       to={to}
       onClick={onNavigate}
-      style={{ textDecoration: "none", color: "#111827", padding: "10px 12px", borderRadius: 10, border: "1.5px solid #F3F4F6", fontWeight: 700 }}
+      style={{
+        textDecoration: "none",
+        color: "#1F2937",
+        padding: "14px 16px",
+        borderRadius: 12,
+        border: "1.5px solid #E5E7EB",
+        background: "#fff",
+        fontWeight: 700,
+        fontSize: 15,
+        transition: "all 0.2s ease",
+      }}
     >
       {label}
     </Link>

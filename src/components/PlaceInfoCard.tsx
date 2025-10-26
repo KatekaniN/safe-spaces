@@ -17,6 +17,10 @@ interface PlaceInfoCardProps {
   phoneNumber?: string;
   address?: string;
   nextChangeLabel?: string; // e.g., "Closes in 1h 20m" or "Opens in 30m"
+  // Favorites
+  canSave?: boolean;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 }
 
 export const PlaceInfoCard = ({
@@ -35,6 +39,9 @@ export const PlaceInfoCard = ({
   phoneNumber,
   address,
   nextChangeLabel,
+  canSave,
+  isFavorite,
+  onToggleFavorite,
 }: PlaceInfoCardProps) => {
   // Inline SVG icons for a crisp, modern look without extra deps
   const IconPhone = (props: React.SVGProps<SVGSVGElement>) => (
@@ -85,6 +92,19 @@ export const PlaceInfoCard = ({
       <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 10.59V7h-2v6h6v-2h-4z" />
     </svg>
   );
+  const IconHeart = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="currentColor"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 21s-7-6-9-10.5C1.5 7 3.5 5 6 5c1.7 0 3 .9 4 2 1-1.1 2.3-2 4-2 2.5 0 4.4 2 3 5.5C15 15 12 21 12 21z" />
+    </svg>
+  );
+
   // Calculate straight-line distance if not provided
   const calculatedDistance = useMemo(() => {
     if (distance !== undefined) return distance;
@@ -223,6 +243,23 @@ export const PlaceInfoCard = ({
   };
 
   const actionsRowStyle: React.CSSProperties = { display: "grid", gap: "12px" };
+  const saveButtonStyle: React.CSSProperties = {
+    width: "100%",
+    padding: "14px",
+    backgroundColor: isFavorite ? "#EC96BE" : "#ffffff",
+    color: isFavorite ? "#ffffff" : "#8764C1",
+    border: `2px solid ${isFavorite ? "#EC96BE" : "#8764C1"}`,
+    borderRadius: "10px",
+    fontSize: "16px",
+    fontWeight: 700,
+    cursor: canSave ? "pointer" : "not-allowed",
+    opacity: canSave ? 1 : 0.6,
+    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "10px",
+  };
 
   return (
     <>
@@ -403,6 +440,29 @@ export const PlaceInfoCard = ({
             >
               <IconNav /> {isNavigating ? "Stop Navigation" : "Get Directions"}
             </button>
+          )}
+
+          {/* Save button (full-width, separate row) */}
+          {canSave && (
+            <div style={{ marginTop: 12 }}>
+              <button
+                onClick={onToggleFavorite}
+                style={saveButtonStyle}
+                disabled={!canSave}
+                onMouseEnter={(e) => {
+                  if (!canSave) return;
+                  e.currentTarget.style.transform = "scale(1.02)";
+                  e.currentTarget.style.boxShadow =
+                    "0 4px 12px rgba(0,0,0,0.15)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                <IconHeart /> {isFavorite ? "Saved" : "Save"}
+              </button>
+            </div>
           )}
         </div>
       </div>

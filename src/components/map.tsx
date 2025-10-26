@@ -17,6 +17,13 @@ import { RoutePolyline } from "./RoutePolyline";
 import { useDirections } from "../hooks/useDirections";
 import { useTravelModeDetector } from "../hooks/useTravelModeDetector";
 import { usePlaceDetails } from "../hooks/usePlaceDetails";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  type Favorite,
+  listFavorites,
+  addFavorite,
+  deleteFavorite,
+} from "../lib/data";
 
 export const PLACE_TYPES = [
   "hospital",
@@ -440,6 +447,74 @@ export const SafeSpacesMap = ({
     selectedPoi?.placeId || null
   );
 
+  // Auth and Favorites
+  const { user } = useAuth();
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [favBusy, setFavBusy] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user?.uid) {
+        setFavorites([]);
+        return;
+      }
+      try {
+        const list = await listFavorites(user.uid);
+        if (!cancelled) setFavorites(list);
+      } catch (e) {
+        console.warn("Failed to load favorites", e);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.uid]);
+
+  const currentFav =
+    selectedPoi?.placeId &&
+    favorites.find((f) => f.placeId === selectedPoi.placeId);
+  const canSave = !!user && !!selectedPoi?.placeId;
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!user?.uid || !selectedPoi?.placeId) return;
+    if (favBusy) return;
+    try {
+      setFavBusy(true);
+      if (currentFav && currentFav.id) {
+        // Optimistic UI update
+        const prev = favorites;
+        setFavorites((fs) => fs.filter((f) => f.id !== currentFav.id));
+        try {
+          await deleteFavorite(user.uid, currentFav.id);
+        } catch (e) {
+          setFavorites(prev);
+        }
+      } else {
+        const payload = {
+          placeId: selectedPoi.placeId,
+          name: selectedPoi.name,
+          type: selectedPoi.type,
+          location: selectedPoi.location,
+          address: selectedDetails?.address,
+        } as Omit<Favorite, "id" | "createdAt" | "updatedAt">;
+        const id = await addFavorite(user.uid, payload);
+        setFavorites((fs) => [{ id, ...payload }, ...fs]);
+      }
+    } finally {
+      setFavBusy(false);
+    }
+  }, [
+    user?.uid,
+    selectedPoi?.placeId,
+    selectedPoi?.name,
+    selectedPoi?.type,
+    selectedPoi?.location,
+    selectedDetails?.address,
+    currentFav,
+    favorites,
+  ]);
+
   // Update map center when user location is first obtained
   useEffect(() => {
     if (userLocation && !hasInitializedLocation && map) {
@@ -646,6 +721,9 @@ export const SafeSpacesMap = ({
           phoneNumber={selectedDetails?.phoneNumber}
           address={selectedDetails?.address}
           nextChangeLabel={selectedDetails?.nextChangeLabel}
+          canSave={canSave}
+          isFavorite={!!currentFav}
+          onToggleFavorite={handleToggleFavorite}
         />
       )}
     </>

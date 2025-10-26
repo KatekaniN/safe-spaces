@@ -1,5 +1,12 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import logoUrl from "../assets/safe-spaces.png";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  createCrimeReport,
+  type CrimeReport,
+  addToWaitlist,
+} from "../lib/data";
 
 const BRAND = {
   purple: "#8764C1",
@@ -11,6 +18,68 @@ const BRAND = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [showReport, setShowReport] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const PROVINCES = [
+    "Eastern Cape",
+    "Free State",
+    "Gauteng",
+    "KwaZulu-Natal",
+    "Limpopo",
+    "Mpumalanga",
+    "Northern Cape",
+    "North West",
+    "Western Cape",
+  ] as const;
+  const SAPS_CRIME_CATEGORIES = [
+    "Murder",
+    "Attempted murder",
+    "Rape / sexual offence",
+    "Domestic violence",
+    "Assault GBH",
+    "Common assault",
+    "Common robbery",
+    "Robbery with aggravating circumstances",
+    "Residential burglary",
+    "Business burglary",
+    "Vehicle hijacking",
+    "Truck hijacking",
+    "Cash-in-transit robbery",
+    "Bank robbery",
+    "Theft of motor vehicle",
+    "Theft out of/from motor vehicle",
+    "Stock theft",
+    "Arson",
+    "Malicious damage to property",
+    "Drug-related crime",
+    "Illegal firearms / ammunition",
+    "Driving under the influence (DUI)",
+    "Commercial crime",
+    "Shoplifting",
+    "Other serious crime",
+  ] as const;
+  const [form, setForm] = useState<{
+    status: CrimeReport["status"];
+    type: CrimeReport["type"];
+    category?: string;
+    description: string;
+    province?: (typeof PROVINCES)[number] | "";
+    occurredAt?: string;
+    location?: { lat: number; lng: number } | null;
+  }>({
+    status: "ongoing",
+    type: "Crime",
+    description: "",
+    province: "",
+    occurredAt: "",
+    location: null,
+  });
+
   return (
     <div
       style={{
@@ -162,10 +231,33 @@ export default function Home() {
               Find Safe Space Now
             </button>
           </Link>
+
+          {/* Report Incident secondary CTA */}
+          <button
+            onClick={() => {
+              setErrors({});
+              setMsg(null);
+              setShowReport(true);
+            }}
+            style={{
+              marginTop: 12,
+              width: "100%",
+              padding: "14px 20px",
+              borderRadius: 16,
+              background: "transparent",
+              color: BRAND.purple,
+              border: `2px solid ${BRAND.purple}`,
+              fontWeight: 800,
+              fontSize: 15,
+              cursor: "pointer",
+            }}
+          >
+            Report an Incident
+          </button>
         </div>
       </div>
 
-      {/* Floating Panic Button (no-op for now) */}
+      {/* Floating Panic Button */}
       <button
         aria-label="Panic"
         title="Panic"
@@ -202,7 +294,7 @@ export default function Home() {
         onBlur={(e) => {
           e.currentTarget.style.boxShadow = `0 4px 16px ${BRAND.pink}50`;
         }}
-        // Intentionally no onClick yet — no-op by request
+        onClick={() => navigate("/safety?start=1")}
       >
         {/* Siren icon */}
         <svg
@@ -247,6 +339,417 @@ export default function Home() {
           />
         </svg>
       </button>
+
+      {/* Report Incident Modal */}
+      {showReport && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(17,24,39,0.45)",
+            display: "grid",
+            placeItems: "center",
+            zIndex: 50,
+            padding: 16,
+          }}
+          onClick={() => setShowReport(false)}
+        >
+          <div
+            style={{
+              width: "min(680px, 100%)",
+              background: "#fff",
+              borderRadius: 16,
+              boxShadow: "0 8px 40px rgba(0,0,0,0.15)",
+              border: "2px solid #E5E7EB",
+              maxHeight: "90dvh",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 16px",
+                borderBottom: "1px solid #F3F4F6",
+              }}
+            >
+              <strong style={{ color: "#1F2937" }}>Report Incident</strong>
+              <button
+                onClick={() => setShowReport(false)}
+                aria-label="Close"
+                title="Close"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: BRAND.purple,
+                  fontSize: 20,
+                }}
+              >
+                ×
+              </button>
+            </div>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                setSaving(true);
+                setMsg(null);
+                const errs: Record<string, string> = {};
+                if (!form.category) errs.category = "Select a category";
+                if (!form.province) errs.province = "Select a province";
+                if (form.status === "past" && !form.occurredAt)
+                  errs.occurredAt =
+                    "Date & time is required for past incidents";
+                setErrors(errs);
+                if (Object.keys(errs).length > 0) {
+                  setSaving(false);
+                  return;
+                }
+                try {
+                  const payload: Omit<CrimeReport, "id" | "createdAt"> = {
+                    status: form.status,
+                    type: form.type,
+                    category: form.category || undefined,
+                    description: form.description || undefined,
+                    province: (form.province as any) || undefined,
+                    occurredAt: form.occurredAt
+                      ? new Date(form.occurredAt)
+                      : form.status === "ongoing"
+                      ? new Date()
+                      : undefined,
+                    location: form.location || undefined,
+                    uid: user?.uid || null,
+                  };
+                  await createCrimeReport(payload);
+                  setMsg("Thanks! Your report was submitted.");
+                  setForm({
+                    status: "ongoing",
+                    type: "Crime",
+                    description: "",
+                    province: "",
+                    occurredAt: "",
+                    location: null,
+                  });
+                } catch (e: any) {
+                  setMsg(e?.message || "Failed to submit report");
+                } finally {
+                  setSaving(false);
+                }
+              }}
+              style={{
+                padding: 16,
+                display: "grid",
+                gap: 12,
+                overflowY: "auto",
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gap: 10,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+                }}
+              >
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span
+                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  >
+                    Status
+                  </span>
+                  <select
+                    value={form.status}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, status: e.target.value as any }))
+                    }
+                    style={{
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    <option value="ongoing">Ongoing</option>
+                    <option value="past">Past</option>
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span
+                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  >
+                    Type
+                  </span>
+                  <select
+                    value={form.type}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, type: e.target.value as any }))
+                    }
+                    style={{
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                    }}
+                  >
+                    {(
+                      [
+                        "Crime",
+                        "GBV",
+                        "Accident",
+                        "Breakdown",
+                        "Medical",
+                        "Other",
+                      ] as const
+                    ).map((t) => (
+                      <option key={t} value={t}>
+                        {t}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {form.type === "Crime" && (
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span
+                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  >
+                    Crime category (SAPS)
+                  </span>
+                  <select
+                    value={form.category || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, category: e.target.value }))
+                    }
+                    aria-invalid={!!errors.category}
+                    style={{
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                      ...(errors.category ? { borderColor: "#EF4444" } : {}),
+                    }}
+                  >
+                    <option value="">Select category</option>
+                    {SAPS_CRIME_CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+
+              <div
+                style={{
+                  display: "grid",
+                  gap: 10,
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                }}
+              >
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span
+                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  >
+                    Province
+                  </span>
+                  <select
+                    value={form.province || ""}
+                    onChange={(e) => {
+                      const val = e.target.value as any;
+                      setForm((f) => ({ ...f, province: val }));
+                      if (val && val !== "Gauteng") {
+                        setInfo(
+                          "Currently available in Gauteng only. Join the waitlist and we'll notify you."
+                        );
+                      } else {
+                        setInfo(null);
+                      }
+                    }}
+                    aria-invalid={!!errors.province}
+                    style={{
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                      ...(errors.province ? { borderColor: "#EF4444" } : {}),
+                    }}
+                  >
+                    <option value="">Select province</option>
+                    {PROVINCES.map((p) => (
+                      <option key={p} value={p}>
+                        {p}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span
+                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  >
+                    Date & time
+                  </span>
+                  <input
+                    type="datetime-local"
+                    value={form.occurredAt || ""}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, occurredAt: e.target.value }))
+                    }
+                    aria-invalid={!!errors.occurredAt}
+                    style={{
+                      border: "1.5px solid #E5E7EB",
+                      borderRadius: 12,
+                      padding: 12,
+                      ...(errors.occurredAt ? { borderColor: "#EF4444" } : {}),
+                    }}
+                  />
+                </label>
+              </div>
+
+              {form.province && form.province !== "Gauteng" && (
+                <div
+                  style={{
+                    background: "#FEF3C7",
+                    color: "#92400E",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    fontSize: 13,
+                  }}
+                >
+                  Currently available in Gauteng only. Select Gauteng to submit
+                  or join the waitlist below.
+                  <div style={{ marginTop: 8, display: "flex", gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          await addToWaitlist({
+                            province: form.province as string,
+                            uid: user?.uid || null,
+                          });
+                          setInfo(
+                            "You're on the waitlist. We'll notify you when we launch in your province."
+                          );
+                        } catch (e: any) {
+                          setMsg(e?.message || "Failed to add to waitlist");
+                        }
+                      }}
+                      style={{
+                        border: `2px solid ${BRAND.purple}`,
+                        color: BRAND.purple,
+                        background: "transparent",
+                        borderRadius: 10,
+                        padding: "8px 10px",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Join Waitlist
+                    </button>
+                    {info && <span style={{ color: "#374151" }}>{info}</span>}
+                  </div>
+                </div>
+              )}
+
+              <label style={{ display: "grid", gap: 6 }}>
+                <span
+                  style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                >
+                  Details (optional)
+                </span>
+                <textarea
+                  rows={3}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, description: e.target.value }))
+                  }
+                  placeholder="Short description"
+                  style={{
+                    border: "1.5px solid #E5E7EB",
+                    borderRadius: 12,
+                    padding: 12,
+                    resize: "vertical",
+                  }}
+                />
+              </label>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!navigator.geolocation) return;
+                    navigator.geolocation.getCurrentPosition((pos) => {
+                      setForm((f) => ({
+                        ...f,
+                        location: {
+                          lat: pos.coords.latitude,
+                          lng: pos.coords.longitude,
+                        },
+                      }));
+                    });
+                  }}
+                  style={{
+                    border: `2px solid ${BRAND.blue}`,
+                    background: "transparent",
+                    color: BRAND.blue,
+                    borderRadius: 12,
+                    padding: "10px 12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Use my location
+                </button>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowReport(false)}
+                    style={{
+                      border: `2px solid ${BRAND.pink}`,
+                      background: "transparent",
+                      color: BRAND.pink,
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Close
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={
+                      saving || (!!form.province && form.province !== "Gauteng")
+                    }
+                    style={{
+                      border: "none",
+                      background: BRAND.purple,
+                      color: "#fff",
+                      borderRadius: 12,
+                      padding: "10px 12px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {saving ? "Submitting…" : "Submit"}
+                  </button>
+                </div>
+              </div>
+
+              {msg && (
+                <div style={{ color: "#374151", fontSize: 13 }}>{msg}</div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
