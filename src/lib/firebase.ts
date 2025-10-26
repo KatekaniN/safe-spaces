@@ -34,7 +34,23 @@ enableIndexedDbPersistence(db).catch(() => {
   // Ignore (multiple tabs or unsupported)
 });
 
-export const storage = getStorage(app);
+// Storage initialization: respect the configured bucket exactly.
+// If VITE_FIREBASE_STORAGE_BUCKET is set, pass it explicitly to getStorage.
+// Accept both plain bucket names and full gs:// URLs.
+function makeStorage() {
+  try {
+    const bucket = (firebaseConfig as any).storageBucket as string | undefined;
+    if (bucket && typeof bucket === "string" && bucket.trim() !== "") {
+      const gsUrl = bucket.startsWith("gs://") ? bucket : `gs://${bucket}`;
+      return getStorage(app, gsUrl);
+    }
+    return getStorage(app);
+  } catch {
+    return getStorage(app);
+  }
+}
+
+export const storage = makeStorage();
 
 // Optional: connect to local emulators during development to avoid hitting
 // remote quotas (e.g., email link daily limits). Enable with VITE_USE_FIREBASE_EMULATORS=true
