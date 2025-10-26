@@ -11,43 +11,51 @@ import { AuthProvider } from "./contexts/AuthContext";
 import AuthPage from "./pages/Auth";
 import { useAuth } from "./contexts/AuthContext";
 
+// Import the pages
+import RecordingsPage from "./pages/RecordingsPage.tsx";
+import SafetyListenerPage from "./pages/SafetyListenerPage.tsx";
+
 function RequireAuth({ children }: { children: React.ReactElement }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
-  if (!user) return <Navigate to="/auth" replace />;
-  return children;
+    const { user, loading } = useAuth();
+    if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
+    if (!user) return <Navigate to="/auth" replace />;
+    return children;
 }
 
 const App = () => {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Public auth route */}
-          <Route path="/auth" element={<AuthPage />} />
+    return (
+        <BrowserRouter>
+            <AuthProvider>
+                <Routes>
+                    {/* Public auth route */}
+                    <Route path="/auth" element={<AuthPage />} />
 
-          {/* Protected app */}
-          <Route
-            path="/*"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/levels" element={<LevelSelect />} />
-                    <Route path="/level1" element={<Level1Needs />} />
-                    <Route path="/level2" element={<Level2Needs />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/map" element={<MapView />} />
-                  </Routes>
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
-  );
+                    {/* Protected app */}
+                    <Route
+                        path="/*"
+                        element={
+                            <RequireAuth>
+                                <AppShell>
+                                    <Routes>
+                                        <Route path="/" element={<Home />} />
+                                        <Route path="/levels" element={<LevelSelect />} />
+                                        <Route path="/level1" element={<Level1Needs />} />
+                                        <Route path="/level2" element={<Level2Needs />} />
+                                        <Route path="/profile" element={<Profile />} />
+                                        <Route path="/map" element={<MapView />} />
+
+                                        {/* Added Routes */}
+                                        <Route path="/RecordingPage" element={<RecordingsPage />} />
+                                        <Route path="/listener" element={<SafetyListenerPage />} />
+                                    </Routes>
+                                </AppShell>
+                            </RequireAuth>
+                        }
+                    />
+                </Routes>
+            </AuthProvider>
+        </BrowserRouter>
+    );
 };
 
 export default App;
