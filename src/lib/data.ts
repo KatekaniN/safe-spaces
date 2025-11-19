@@ -174,6 +174,45 @@ export async function deleteFavorite(uid: string, id: string): Promise<void> {
   await deleteDoc(ref);
 }
 
+// Police Stations (public reference data)
+export type PoliceStation = {
+  id?: string;
+  name: string;
+  location: { lat: number; lng: number };
+  phone?: string;
+  email?: string;
+  address?: string;
+  updatedAt?: any;
+};
+
+export async function upsertPoliceStations(
+  stations: PoliceStation[]
+): Promise<void> {
+  const batch = writeBatch(db);
+  for (const s of stations || []) {
+    const id =
+      s.id ||
+      s.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+    const ref = doc(db, "policeStations", id);
+    batch.set(
+      ref,
+      {
+        name: s.name,
+        location: s.location,
+        phone: s.phone || null,
+        email: s.email || null,
+        address: s.address || null,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+  }
+  await batch.commit();
+}
+
 // Emergency Contacts
 export type Contact = {
   id?: string;
@@ -409,6 +448,67 @@ export async function listUserCrimeReports(
   const qy = query(ref, orderBy("createdAt", "desc"));
   const snap = await getDocs(qy);
   return snap.docs.map((d) => ({ id: d.id, ...(d.data() as CrimeReport) }));
+}
+
+// Panic Alerts (end-to-end alert/response)
+export type PanicAlertStatus = "open" | "acknowledged" | "resolved";
+
+export type PanicAlert = {
+  id?: string;
+  userAlertId?: string | null; // id of the per-user copy (users/{uid}/panicAlerts/{userAlertId})
+  uid: string;
+  name?: string | null;
+  createdAt?: any;
+  respondedAt?: any;
+  resolvedAt?: any;
+  responderUid?: string | null;
+  status: PanicAlertStatus;
+  location?: { lat: number; lng: number } | null;
+  mapUrl?: string | null;
+  liveTrackingUrl?: string | null;
+  selfieUrl?: string | null;
+  address?: { formatted?: string; placeId?: string } | null;
+  recipients?: { id?: string; name?: string; phone?: string }[];
+  nearestStation?: {
+    id?: string;
+    name: string;
+    distanceKm?: number;
+    phone?: string;
+    email?: string;
+  } | null;
+  userSnapshot?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+  } | null;
+};
+
+export async function updatePanicAlert(
+  id: string,
+  partial: Partial<Omit<PanicAlert, "id" | "uid" | "createdAt">>,
+  uid?: string | null,
+  userAlertId?: string | null
+): Promise<void> {
+  const clean = removeUndefined(partial as any);
+  const updates: any = { ...clean };
+  if (partial.status === "acknowledged") {
+    updates.respondedAt = serverTimestamp();
+  }
+  if (partial.status === "resolved") {
+    updates.resolvedAt = serverTimestamp();
+  }
+  // Always update top-level alert
+  const topRef = doc(db, "panicAlerts", id);
+  await updateDoc(topRef, updates);
+  // Best-effort update per-user copy when we know the correct userAlertId
+  if (uid && userAlertId) {
+    try {
+      const userRef = doc(db, "users", uid, "panicAlerts", userAlertId);
+      await updateDoc(userRef, updates);
+    } catch {
+      // ignore if missing
+    }
+  }
 }
 
 // Admin invites (scaffolding): stored at adminInvites/{code}

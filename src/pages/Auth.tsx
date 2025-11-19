@@ -393,8 +393,8 @@ export default function AuthPage() {
           <img
             src={logoUrl}
             alt="Safe Spaces"
-            width={140}
-            height={140}
+            width={300}
+            height={300}
             style={{
               marginBottom: 24,
               filter: "drop-shadow(0 4px 12px rgba(0,0,0,0.15))",
@@ -409,7 +409,7 @@ export default function AuthPage() {
               textAlign: "center",
             }}
           >
-            Safe Spaces
+            You are safe here
           </h1>
           <p
             style={{
@@ -890,6 +890,24 @@ export default function AuthPage() {
           flexDirection: "column",
         }}
       >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            padding: "12px 0 8px",
+          }}
+        >
+          <img
+            src={logoUrl}
+            alt="Safe Spaces"
+            style={{
+              width: 200,
+              height: 200,
+              objectFit: "contain",
+              filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.08))",
+            }}
+          />
+        </div>
         {error && (
           <div
             style={{

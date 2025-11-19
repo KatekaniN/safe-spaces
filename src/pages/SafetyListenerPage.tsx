@@ -15,6 +15,14 @@ export default function SafetyListenerPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const startFlag = params.get("start");
+  const [shareLive, setShareLive] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem("safe_share_live");
+      return raw ? raw === "1" : true; // default on
+    } catch {
+      return true;
+    }
+  });
   const {
     isListening,
     isRecording,
@@ -28,7 +36,10 @@ export default function SafetyListenerPage() {
     stopRecordTrigger,
     startEmergency,
     stopEmergency,
-  } = useSafetyMonitor({ onUploadSuccess: () => navigate("/recordings") });
+  } = useSafetyMonitor({
+    onUploadSuccess: () => navigate("/recordings"),
+    includeLiveTracking: shareLive,
+  });
 
   const [manualTrigger, setManualTrigger] = useState("");
 
@@ -83,6 +94,30 @@ export default function SafetyListenerPage() {
           }}
         >
           <div style={{ display: "grid", gap: 12 }}>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                color: "#374151",
+                fontSize: 14,
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={shareLive}
+                onChange={(e) => {
+                  setShareLive(e.target.checked);
+                  try {
+                    localStorage.setItem(
+                      "safe_share_live",
+                      e.target.checked ? "1" : "0"
+                    );
+                  } catch {}
+                }}
+              />
+              Share a live directions link with responders
+            </label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <button
                 type="button"

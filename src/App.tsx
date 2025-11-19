@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { processPendingUploads } from "./lib/api";
 import { getUserProfile } from "./lib/data";
 
 // Route-based code splitting for faster initial load
@@ -78,9 +79,43 @@ function HomeOrAdmin() {
 }
 
 const App = () => {
+  // Bridge SW background sync and online events to app-side queue processing
+  const SyncBridge = () => {
+    const { user } = useAuth();
+    useEffect(() => {
+      const uid = user?.uid;
+      if (!uid) return;
+      // Attempt to process queue on login/app start
+      processPendingUploads(uid);
+    }, [user?.uid]);
+
+    useEffect(() => {
+      const uid = user?.uid;
+      if (!uid) return;
+      function onMessage(e: MessageEvent) {
+        if ((e?.data as any)?.type === "sw-sync:upload-recordings") {
+          processPendingUploads(uid);
+        }
+      }
+      function onOnline() {
+        processPendingUploads(uid);
+      }
+      navigator.serviceWorker?.addEventListener?.("message", onMessage as any);
+      window.addEventListener("online", onOnline);
+      return () => {
+        navigator.serviceWorker?.removeEventListener?.(
+          "message",
+          onMessage as any
+        );
+        window.removeEventListener("online", onOnline);
+      };
+    }, [user?.uid]);
+    return null;
+  };
   return (
     <BrowserRouter>
       <AuthProvider>
+        <SyncBridge />
         <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
           <Routes>
             {/* Public auth route */}

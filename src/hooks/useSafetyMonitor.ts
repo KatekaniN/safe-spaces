@@ -1,14 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { saveRecording, uploadRecordingToCloud } from "../lib/api.ts";
+import {
+  saveRecording,
+  uploadRecordingToCloud,
+  enqueuePendingUpload,
+} from "../lib/api.ts";
+import { triggerPanicAlert, getWhatsAppLinksForContacts } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 
 type Options = {
   onUploadSuccess?: () => void;
   emergencyDurationSec?: number; // default 20
+  includeLiveTracking?: boolean; // when true, include a directions link in alert
 };
 
 export function useSafetyMonitor(opts: Options = {}) {
-  const { onUploadSuccess, emergencyDurationSec = 20 } = opts;
+  const {
+    onUploadSuccess,
+    emergencyDurationSec = 20,
+    includeLiveTracking = false,
+  } = opts;
   const { user } = useAuth();
   const [isListening, setIsListening] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
@@ -101,6 +111,50 @@ export function useSafetyMonitor(opts: Options = {}) {
           );
         }
       } catch {}
+      // Fire off panic alert immediately (best-effort) with location + selfie
+      if (user?.uid) {
+        (async () => {
+          try {
+            const liveUrl =
+              includeLiveTracking && geoRef.current
+                ? `https://www.google.com/maps/dir/?api=1&destination=${geoRef.current.lat},${geoRef.current.lng}&travelmode=driving`
+                : null;
+            const res = await triggerPanicAlert(user.uid, {
+              location: geoRef.current,
+              name: user.displayName || undefined,
+              liveTrackingUrl: liveUrl,
+            });
+            // Only attempt WhatsApp if the user has saved emergency contacts
+            const hasContacts = (res.contacts || []).length > 0;
+            if (hasContacts) {
+              const links = getWhatsAppLinksForContacts(
+                res.contacts,
+                res.shareText
+              );
+              // Prefer opening a single chooser if multiple; otherwise first contact
+              const target =
+                links.length > 1
+                  ? { url: links[0].url }
+                  : { url: links[0].url };
+              try {
+                window.open(target.url, "_blank");
+                setStatusMessage("Opened WhatsApp to notify contacts");
+              } catch {
+                // Fallback: navigate current tab
+                try {
+                  window.location.href = target.url;
+                } catch {}
+              }
+            } else {
+              setStatusMessage(
+                "Add emergency contacts in Profile to enable WhatsApp alerts"
+              );
+            }
+          } catch {
+            // ignore failures
+          }
+        })();
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
       recChunksRef.current = [];
@@ -123,7 +177,24 @@ export function useSafetyMonitor(opts: Options = {}) {
                 geoRef.current
               );
             } catch (e) {
-              // cloud upload failed; local save still exists
+              // Queue for background sync if cloud upload fails (offline, CORS, etc.)
+              try {
+                await enqueuePendingUpload(
+                  blob,
+                  name,
+                  geoRef.current || undefined
+                );
+                if ("serviceWorker" in navigator) {
+                  try {
+                    const reg = await navigator.serviceWorker.ready;
+                    // Register a sync; tag handled in sw to trigger app-side processing
+                    // if SyncManager unsupported, this will throw and we ignore
+                    // Fallback processing will happen on next app start/online event
+                    // @ts-ignore
+                    await reg.sync?.register?.("upload-recordings");
+                  } catch {}
+                }
+              } catch {}
             }
           }
           setStatusMessage("Recording saved");
@@ -149,7 +220,13 @@ export function useSafetyMonitor(opts: Options = {}) {
     } catch (e: any) {
       setStatusMessage(e?.message || "Microphone permission denied");
     }
-  }, [emergencyDurationSec, isRecording, onUploadSuccess, stopEmergency]);
+  }, [
+    emergencyDurationSec,
+    includeLiveTracking,
+    isRecording,
+    onUploadSuccess,
+    stopEmergency,
+  ]);
 
   // Background speech listener
   useEffect(() => {

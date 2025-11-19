@@ -3,6 +3,7 @@ import React from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { getUserProfile, UserProfile } from "../lib/data";
 import logoUrl from "../assets/safe-spaces.png";
+import InstallPrompt from "./InstallPrompt";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -212,7 +213,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 style={{
                   border: "1.5px solid #E5E7EB",
                   background: "#fff",
-                  color: "#111827",
+                  color: "#8764C1",
                   fontWeight: 700,
                   borderRadius: 10,
                   padding: "8px 14px",
@@ -222,6 +223,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 Sign out
               </button>
             )}
+
+            {/* Install PWA button appears only when eligible */}
+            <div style={{ display: isNarrow ? "none" : "inline-flex" }}>
+              <InstallPrompt />
+            </div>
 
             {/* Hamburger */}
             <button
@@ -379,13 +385,13 @@ function MenuLink({
       onClick={onNavigate}
       style={{
         textDecoration: "none",
-        color: "#1F2937",
+        color: "#8764C1",
         padding: "14px 16px",
         borderRadius: 12,
         border: "1.5px solid #E5E7EB",
         background: "#fff",
         fontWeight: 700,
-        fontSize: 15,
+        fontSize: 16,
         transition: "all 0.2s ease",
       }}
     >
