@@ -3,12 +3,12 @@ import { useNavigate } from "react-router-dom";
 import type { NeedKey } from "../lib/needs";
 
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
-  blueLight: "#EFF5FC",
-  pinkLight: "#FDF3F8",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
+  purpleLight: "var(--brand-tint)",
+  blueLight: "var(--blue-tint)",
+  pinkLight: "var(--pink-tint)",
 };
 
 const NeedIcon = ({ name }: { name: NeedKey }) => {
@@ -66,36 +66,36 @@ export default function Level2Needs() {
       [
         {
           key: "police_security" as NeedKey,
-          title: "Police / Security",
-          desc: "Crime in progress, threats, harassment",
+          title: "Police & security",
+          desc: "Crime, threats, harassment — get protection",
           color: BRAND.purple,
           bgColor: BRAND.purpleLight,
         },
         {
           key: "hospital_emergency" as NeedKey,
-          title: "Emergency Medical (ER)",
-          desc: "Serious injury or urgent medical help",
+          title: "Emergency room",
+          desc: "Serious injury or urgent medical care — go now",
           color: BRAND.pink,
           bgColor: BRAND.pinkLight,
         },
         {
           key: "urgent_care" as NeedKey,
-          title: "Minor Injury / Clinic",
-          desc: "Stitches, check-up, non‑life‑threatening",
+          title: "Clinic or urgent care",
+          desc: "Stitches, check‑ups — not life‑threatening",
           color: BRAND.blue,
           bgColor: BRAND.blueLight,
         },
         {
           key: "fire_rescue" as NeedKey,
-          title: "Fire / Accident",
-          desc: "Fire department or rescue services",
+          title: "Fire & rescue",
+          desc: "Fire, accident, or someone trapped",
           color: BRAND.purple,
           bgColor: BRAND.purpleLight,
         },
         {
           key: "roadside_assist" as NeedKey,
-          title: "Roadside Assistance / Tow",
-          desc: "Tow truck or car help nearby",
+          title: "Car trouble",
+          desc: "Breakdown, tow truck, or a safe garage",
           color: BRAND.blue,
           bgColor: BRAND.blueLight,
         },
@@ -117,31 +117,29 @@ export default function Level2Needs() {
       style={{
         minHeight: "calc(100dvh - 60px)",
         padding: "20px 16px calc(24px + env(safe-area-inset-bottom))",
-        background: "#FAFAFA",
+        background: "transparent",
       }}
     >
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
         <h1
           style={{
-            color: "#1F2937",
-            fontWeight: 800,
-            letterSpacing: "-0.02em",
-            fontSize: 28,
+            color: "var(--text)",
+            fontWeight: 700,
+            fontSize: 30,
             margin: "0 0 8px",
           }}
         >
-          Is it an emergency?
+          What's happening?
         </h1>
         <p
           style={{
-            color: "#6B7280",
+            color: "var(--muted)",
             margin: "0 0 16px",
             fontSize: 15,
             lineHeight: 1.6,
           }}
         >
-          Tell us what happened or might happen. We'll find the right official
-          services.
+          We'll route you to the right official service nearby.
         </p>
 
         {/* Open Now toggle */}
@@ -182,10 +180,10 @@ export default function Level2Needs() {
               </svg>
             </div>
             <div>
-              <div style={{ fontWeight: 700, color: "#1F2937", fontSize: 15 }}>
+              <div style={{ fontWeight: 700, color: "var(--text)", fontSize: 15 }}>
                 Show places open now
               </div>
-              <div style={{ color: "#6B7280", fontSize: 13 }}>
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
                 Hospitals and police are 24/7 in most areas
               </div>
             </div>
@@ -209,7 +207,7 @@ export default function Level2Needs() {
                 width: 52,
                 height: 32,
                 borderRadius: 999,
-                background: openNow ? BRAND.pink : "#D1D5DB",
+                background: openNow ? BRAND.pink : "var(--border-strong)",
                 position: "relative",
                 transition: "background .2s ease",
               }}
@@ -222,7 +220,7 @@ export default function Level2Needs() {
                   width: 24,
                   height: 24,
                   borderRadius: "50%",
-                  background: "#fff",
+                  background: "var(--surface)",
                   transition: "left .2s ease",
                   boxShadow: "0 2px 4px rgba(0,0,0,.15)",
                 }}
@@ -231,119 +229,127 @@ export default function Level2Needs() {
           </label>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-            gap: 12,
-          }}
-        >
-          {items.map((it) => {
+        <div style={{ display: "grid", gap: 10 }}>
+          {items.map((it, i) => {
             const active = selected === it.key;
             return (
               <button
                 key={it.key}
                 onClick={() => setSelected(it.key)}
+                aria-pressed={active}
                 style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 16,
+                  width: "100%",
                   textAlign: "left",
-                  borderRadius: 20,
-                  border: `2px solid ${active ? it.color : "#E5E7EB"}`,
-                  background: active ? it.bgColor : "#fff",
-                  padding: "18px",
-                  boxShadow: active
-                    ? `0 4px 16px ${it.color}20`
-                    : "0 2px 8px rgba(0,0,0,0.04)",
+                  padding: "16px 18px",
+                  borderRadius: 18,
+                  border: `1.5px solid ${
+                    active ? it.color : "var(--glass-border)"
+                  }`,
+                  background: active ? it.bgColor : "var(--glass-bg)",
+                  backdropFilter: "blur(14px)",
+                  WebkitBackdropFilter: "blur(14px)",
                   cursor: "pointer",
-                  transition: "all .2s ease",
+                  transition: "all .18s ease",
                 }}
                 onMouseEnter={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(0,0,0,0.08)";
-                  }
+                  if (!active)
+                    e.currentTarget.style.borderColor = "var(--border-strong)";
                 }}
                 onMouseLeave={(e) => {
-                  if (!active) {
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 2px 8px rgba(0,0,0,0.04)";
-                  }
+                  if (!active)
+                    e.currentTarget.style.borderColor = "var(--glass-border)";
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <div
+                  style={{
+                    width: 46,
+                    height: 46,
+                    borderRadius: 13,
+                    background: it.color,
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <NeedIcon name={it.key} />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: it.color,
-                      display: "grid",
-                      placeItems: "center",
-                      flexShrink: 0,
+                      fontWeight: 700,
+                      color: "var(--text)",
+                      fontSize: 16,
+                      marginBottom: 2,
                     }}
                   >
-                    <NeedIcon name={it.key} />
+                    {it.title}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontWeight: 700,
-                        color: "#1F2937",
-                        fontSize: 16,
-                        marginBottom: 4,
-                      }}
-                    >
-                      {it.title}
-                    </div>
-                    <div
-                      style={{
-                        color: "#6B7280",
-                        fontSize: 14,
-                        lineHeight: 1.4,
-                      }}
-                    >
-                      {it.desc}
-                    </div>
+                  <div
+                    style={{
+                      color: "var(--muted)",
+                      fontSize: 13.5,
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {it.desc}
                   </div>
                 </div>
+                <span
+                  aria-hidden
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    display: "grid",
+                    placeItems: "center",
+                    border: `2px solid ${
+                      active ? it.color : "var(--border-strong)"
+                    }`,
+                    background: active ? it.color : "transparent",
+                    color: "var(--on-brand)",
+                    fontSize: 14,
+                    transition: "all .18s ease",
+                  }}
+                >
+                  {active ? "✓" : ""}
+                </span>
               </button>
             );
           })}
         </div>
 
+        <div
+          style={{
+            position: "sticky",
+            bottom: 12,
+            marginTop: 20,
+            zIndex: 5,
+          }}
+        >
         <button
           disabled={!selected}
           onClick={go}
           style={{
-            marginTop: 24,
             width: "100%",
             padding: "16px 20px",
             borderRadius: 16,
             border: "none",
             cursor: selected ? "pointer" : "not-allowed",
-            background: selected ? BRAND.purple : "#D1D5DB",
-            color: "#fff",
+            background: selected ? BRAND.pink : "var(--border-strong)",
+            color: "var(--on-brand)",
             fontWeight: 700,
             fontSize: 17,
-            boxShadow: selected ? `0 4px 16px ${BRAND.purple}40` : "none",
+            boxShadow: selected ? "var(--shadow-md)" : "none",
             transition: "all .2s ease",
           }}
-          onMouseEnter={(e) => {
-            if (selected) {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = `0 6px 20px ${BRAND.purple}50`;
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (selected) {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = `0 4px 16px ${BRAND.purple}40`;
-            }
-          }}
         >
-          Show emergency Safe Spaces
+          Show emergency services near me
         </button>
+        </div>
       </div>
     </div>
   );

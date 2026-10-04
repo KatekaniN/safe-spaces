@@ -13,12 +13,12 @@ import { normalizePhone } from "../lib/phone";
 import logoUrl from "../assets/safe-spaces.png";
 
 const BRAND = {
-  purple: "#8764C1",
+  purple: "var(--brand)",
   lightpurple: "#dbbaf4ff",
-  blue: "#87A5DC",
+  blue: "var(--brand-blue)",
   lightpink: "#ebbcd2ff",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
+  pink: "var(--brand-pink)",
+  purpleLight: "var(--brand-tint)",
 };
 
 export default function AuthPage() {
@@ -431,7 +431,7 @@ export default function AuthPage() {
             onClick={() => setStep("signup")}
             style={{
               ...actionBtn(),
-              background: "#fff",
+              background: "var(--surface)",
               color: BRAND.purple,
               marginBottom: 12,
             }}
@@ -462,13 +462,13 @@ export default function AuthPage() {
           minHeight: "100dvh",
           display: "flex",
           flexDirection: "column",
-          background: "#FAFAFA",
+          background: "var(--surface-2)",
         }}
       >
         <header
           style={{
-            background: "#fff",
-            borderBottom: "1px solid #E5E7EB",
+            background: "var(--surface)",
+            borderBottom: "1px solid var(--border)",
             padding: "16px 20px",
             display: "flex",
             alignItems: "center",
@@ -493,7 +493,7 @@ export default function AuthPage() {
               margin: 0,
               fontSize: 18,
               fontWeight: 700,
-              color: "#1F2937",
+              color: "var(--text)",
             }}
           >
             Create Account
@@ -511,8 +511,8 @@ export default function AuthPage() {
           {error && (
             <div
               style={{
-                background: "#FEE2E2",
-                color: "#991B1B",
+                background: "var(--danger-tint)",
+                color: "var(--danger-text)",
                 padding: "12px 14px",
                 borderRadius: 12,
                 marginBottom: 16,
@@ -555,7 +555,7 @@ export default function AuthPage() {
                     padding: "0 10px",
                     borderRadius: 8,
                     border: `1px solid ${BRAND.purple}`,
-                    background: "#fff",
+                    background: "var(--surface)",
                     color: BRAND.purple,
                     fontWeight: 700,
                     cursor: "pointer",
@@ -638,8 +638,8 @@ export default function AuthPage() {
             {leProvince && leProvince !== "Gauteng" && (
               <div
                 style={{
-                  background: "#FEF3C7",
-                  color: "#92400E",
+                  background: "var(--warn-tint)",
+                  color: "var(--warn-text)",
                   padding: "10px 12px",
                   borderRadius: 10,
                   fontSize: 13,
@@ -688,7 +688,7 @@ export default function AuthPage() {
                     Join Waitlist
                   </button>
                   {info && (
-                    <span style={{ color: "#374151", fontSize: 13 }}>
+                    <span style={{ color: "var(--text-2)", fontSize: 13 }}>
                       {info}
                     </span>
                   )}
@@ -713,7 +713,7 @@ export default function AuthPage() {
                 onChange={(e) => setAdminCandidate(e.target.checked)}
                 style={{ marginTop: 2, cursor: "pointer" }}
               />
-              <span style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}>
+              <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
                 I am law enforcement personnel and would like to sign up as an
                 admin for my organization.
               </span>
@@ -797,7 +797,7 @@ export default function AuthPage() {
                 onChange={(e) => setAgree(e.target.checked)}
                 style={{ marginTop: 2, cursor: "pointer" }}
               />
-              <span style={{ color: "#6B7280", fontSize: 13, lineHeight: 1.5 }}>
+              <span style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.5 }}>
                 I agree to the{" "}
                 <a href="#" style={{ color: BRAND.purple, fontWeight: 600 }}>
                   Terms of Service
@@ -816,7 +816,7 @@ export default function AuthPage() {
               onClick={() => handleEmail("signup")}
               style={{
                 ...actionBtn(),
-                background: "#111827",
+                background: "var(--text)",
                 color: "#fff",
                 marginBottom: 10,
               }}
@@ -849,13 +849,13 @@ export default function AuthPage() {
         minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
-        background: "#FAFAFA",
+        background: "var(--surface-2)",
       }}
     >
       <header
         style={{
-          background: "#fff",
-          borderBottom: "1px solid #E5E7EB",
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border)",
           padding: "16px 20px",
           display: "flex",
           alignItems: "center",
@@ -876,7 +876,7 @@ export default function AuthPage() {
           ←
         </button>
         <h2
-          style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#1F2937" }}
+          style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--text)" }}
         >
           Sign In
         </h2>
@@ -911,8 +911,8 @@ export default function AuthPage() {
         {error && (
           <div
             style={{
-              background: "#FEE2E2",
-              color: "#991B1B",
+              background: "var(--danger-tint)",
+              color: "var(--danger-text)",
               padding: "12px 14px",
               borderRadius: 12,
               marginBottom: 16,
@@ -957,7 +957,7 @@ export default function AuthPage() {
                     padding: "0 10px",
                     borderRadius: 8,
                     border: `1px solid ${BRAND.purple}`,
-                    background: "#fff",
+                    background: "var(--surface)",
                     color: BRAND.purple,
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1038,7 +1038,7 @@ export default function AuthPage() {
               textAlign: "center",
               marginTop: 16,
               fontSize: 13,
-              color: "#6B7280",
+              color: "var(--muted)",
             }}
           >
             Don't have an account?{" "}
@@ -1064,7 +1064,7 @@ export default function AuthPage() {
 
 function inputStyle(): React.CSSProperties {
   return {
-    border: "1.5px solid #E5E7EB",
+    border: "1.5px solid var(--border)",
     borderRadius: 12,
     padding: "14px",
     fontSize: 15,
@@ -1097,7 +1097,7 @@ function Field({
 }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ color: "#374151", fontSize: 14, fontWeight: 600 }}>
+      <span style={{ color: "var(--text-2)", fontSize: 14, fontWeight: 600 }}>
         {label}
         {required && <span style={{ color: BRAND.pink }}> *</span>}
       </span>
@@ -1110,7 +1110,7 @@ function Field({
 
 function PasswordStrength({ password }: { password: string }) {
   const score = getStrengthScore(password);
-  const color = score <= 1 ? "#F59E0B" : score === 2 ? "#10B981" : "#16A34A";
+  const color = score <= 1 ? "#F59E0B" : score === 2 ? "var(--success)" : "#16A34A";
   const label =
     score <= 1
       ? "Weak"
@@ -1122,7 +1122,7 @@ function PasswordStrength({ password }: { password: string }) {
   const width = Math.min(100, (score / 4) * 100);
   return (
     <div style={{ marginTop: 8 }}>
-      <div style={{ height: 6, background: "#E5E7EB", borderRadius: 999 }}>
+      <div style={{ height: 6, background: "var(--border)", borderRadius: 999 }}>
         <div
           style={{
             width: `${width}%`,
@@ -1132,7 +1132,7 @@ function PasswordStrength({ password }: { password: string }) {
           }}
         />
       </div>
-      <div style={{ fontSize: 12, color: "#6B7280", marginTop: 6 }}>
+      <div style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>
         {label}
       </div>
     </div>

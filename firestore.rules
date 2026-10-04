@@ -1,0 +1,71 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return signedIn() &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.canAccessAdmin == true;
+    }
+
+    // Per-user data (profile, favorites, contacts, medical, settings, incidents, etc.)
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+      match /{subcollection}/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Phone number reservations (transactional uniqueness check)
+    match /phones/{phone} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+    }
+
+    // Public reference data
+    match /policeStations/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Anonymous-friendly submissions
+    match /issueReports/{id} {
+      allow create: if signedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /crimeReports/{id} {
+      allow create: if signedIn();
+      allow read, update: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /panicAlerts/{id} {
+      allow create: if signedIn();
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /adminInvites/{code} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /waitlist/{id} {
+      allow create: if true;
+      allow read: if isAdmin();
+    }
+
+    // Admin dashboard: cross-user incident queries
+    match /{path=**}/incidents/{id} {
+      allow read: if isAdmin();
+    }
+  }
+}

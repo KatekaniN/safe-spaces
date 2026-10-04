@@ -22,17 +22,17 @@ import {
 } from "firebase/firestore";
 
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  gray: "#6B7280",
-  border: "#E5E7EB",
-  bg: "#FAFAFA",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
+  gray: "var(--muted)",
+  border: "var(--border)",
+  bg: "var(--surface-2)",
 };
 
 const STATUS_COLORS: Record<string, string> = {
   open: BRAND.purple,
-  acknowledged: "#87A5DC", // brand blue
+  acknowledged: "var(--brand-blue)", // brand blue
   resolved: BRAND.pink,
 };
 
@@ -434,8 +434,8 @@ export default function AdminPage() {
       {profile && !hasAccess && (
         <div
           style={{
-            background: "#FEF3C7",
-            color: "#92400E",
+            background: "var(--warn-tint)",
+            color: "var(--warn-text)",
             padding: 12,
             borderRadius: 8,
             marginBottom: 12,
@@ -447,8 +447,8 @@ export default function AdminPage() {
       {error && (
         <div
           style={{
-            background: "#FEE2E2",
-            color: "#991B1B",
+            background: "var(--danger-tint)",
+            color: "var(--danger-text)",
             padding: 12,
             borderRadius: 8,
             marginBottom: 12,
@@ -476,9 +476,9 @@ export default function AdminPage() {
             {/* Guidance banner: enforce acknowledge-before-resolve */}
             <div
               style={{
-                background: "#EFF6FF",
+                background: "var(--blue-tint)",
                 border: `1.5px solid ${BRAND.blue}`,
-                color: "#1F2937",
+                color: "var(--text)",
                 padding: 10,
                 borderRadius: 10,
                 margin: "0 0 12px",
@@ -502,7 +502,7 @@ export default function AdminPage() {
                   style={{
                     border: `1.5px solid ${BRAND.border}`,
                     borderRadius: 12,
-                    background: "#fff",
+                    background: "var(--surface)",
                     padding: 12,
                     display: "grid",
                     gap: 8,
@@ -512,7 +512,7 @@ export default function AdminPage() {
                   {a.status === "open" && (
                     <div
                       style={{
-                        background: "#FEF3C7",
+                        background: "var(--warn-tint)",
                         border: "1.5px solid #FBBF24",
                         color: "#ce1e53ff",
                         padding: 8,
@@ -560,7 +560,7 @@ export default function AdminPage() {
                         href={(a as any).liveTrackingUrl}
                         target="_blank"
                         rel="noreferrer"
-                        style={{ ...chip("#10B981"), textDecoration: "none" }}
+                        style={{ ...chip("var(--success)"), textDecoration: "none" }}
                       >
                         Live
                       </a>
@@ -596,7 +596,7 @@ export default function AdminPage() {
                   </div>
                   {(a.address?.formatted ||
                     (a.id && addressCache[a.id]?.formatted)) && (
-                    <div style={{ color: "#374151", fontSize: 13 }}>
+                    <div style={{ color: "var(--text-2)", fontSize: 13 }}>
                       {a.address?.formatted ||
                         (a.id ? addressCache[a.id]?.formatted : "")}
                     </div>
@@ -619,7 +619,7 @@ export default function AdminPage() {
                             gap: 8,
                             flexWrap: "wrap",
                             alignItems: "center",
-                            color: "#111827",
+                            color: "var(--text)",
                             fontSize: 13,
                           }}
                         >
@@ -633,7 +633,7 @@ export default function AdminPage() {
                             <a
                               href={`tel:${String(phone).replace(/\s+/g, "")}`}
                               style={{
-                                ...btnOutline("#10B981"),
+                                ...btnOutline("var(--success)"),
                                 textDecoration: "none",
                               }}
                             >
@@ -653,7 +653,7 @@ export default function AdminPage() {
                     <div
                       style={{
                         fontSize: 12,
-                        color: "#374151",
+                        color: "var(--text-2)",
                         display: "grid",
                         gap: 4,
                       }}
@@ -760,7 +760,7 @@ export default function AdminPage() {
                   display: "grid",
                   gap: 8,
                   border: `1.5px solid ${BRAND.border}`,
-                  background: "#fff",
+                  background: "var(--surface)",
                   borderRadius: 12,
                   padding: 12,
                 }}
@@ -848,7 +848,7 @@ export default function AdminPage() {
                     {importing ? "Importing…" : "Parse and import (geocode)"}
                   </button>
                   {importNote && (
-                    <div style={{ color: "#374151", fontSize: 13 }}>
+                    <div style={{ color: "var(--text-2)", fontSize: 13 }}>
                       {importNote}
                     </div>
                   )}
@@ -874,7 +874,7 @@ export default function AdminPage() {
                   style={{
                     border: `1.5px solid ${BRAND.border}`,
                     borderRadius: 12,
-                    background: "#fff",
+                    background: "var(--surface)",
                     padding: 12,
                     display: "grid",
                     gap: 8,
@@ -898,7 +898,7 @@ export default function AdminPage() {
                     </span>
                   </div>
                   {r.description && (
-                    <div style={{ fontSize: 14, color: "#111827" }}>
+                    <div style={{ fontSize: 14, color: "var(--text)" }}>
                       {r.description}
                     </div>
                   )}
@@ -976,7 +976,7 @@ export default function AdminPage() {
                   style={{
                     border: `1.5px solid ${BRAND.border}`,
                     borderRadius: 12,
-                    background: "#fff",
+                    background: "var(--surface)",
                     padding: 12,
                     display: "grid",
                     gap: 6,
@@ -1037,14 +1037,14 @@ export default function AdminPage() {
   );
 }
 
-function chip(color = "#E5E7EB"): React.CSSProperties {
+function chip(color = "var(--border)"): React.CSSProperties {
   return {
     display: "inline-block",
     padding: "4px 10px",
-    borderRadius: 999,
-    background: color === "#E5E7EB" ? "#F3F4F6" : color + "22",
+    borderRadius: 10,
+    background: color === "var(--border)" ? "var(--surface-3)" : color + "22",
     border: `1.5px solid ${color}`,
-    color: "#374151",
+    color: "var(--text-2)",
     fontSize: 12,
     maxWidth: "100%",
     overflowWrap: "anywhere",
@@ -1059,7 +1059,7 @@ function btnBase(): React.CSSProperties {
     fontWeight: 700,
     fontSize: 14,
     cursor: "pointer",
-    background: "#fff",
+    background: "var(--surface)",
   } as React.CSSProperties;
 }
 
@@ -1076,7 +1076,7 @@ function btnSolid(color: string): React.CSSProperties {
     ...btnBase(),
     background: color,
     border: `1.5px solid ${color}`,
-    color: "#fff",
+    color: "var(--on-brand)",
   } as React.CSSProperties;
 }
 
@@ -1084,10 +1084,10 @@ function chipSolid(color: string): React.CSSProperties {
   return {
     display: "inline-block",
     padding: "4px 10px",
-    borderRadius: 999,
+    borderRadius: 10,
     background: color,
     border: `1.5px solid ${color}`,
-    color: "#fff",
+    color: "var(--on-brand)",
     fontSize: 12,
     maxWidth: "100%",
     overflowWrap: "anywhere",
@@ -1099,10 +1099,10 @@ function chipSoft(color: string): React.CSSProperties {
   return {
     display: "inline-block",
     padding: "4px 10px",
-    borderRadius: 999,
+    borderRadius: 10,
     background: color + "22",
     border: `1.5px solid ${color}`,
-    color: "#374151",
+    color: "var(--text-2)",
     fontSize: 12,
     maxWidth: "100%",
     overflowWrap: "anywhere",

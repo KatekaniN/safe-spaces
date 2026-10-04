@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import { processPendingUploads } from "./lib/api";
 import { getUserProfile } from "./lib/data";
 
@@ -14,23 +15,14 @@ const Level1Needs = lazy(() => import("./pages/Level1Needs.tsx"));
 const Level2Needs = lazy(() => import("./pages/Level2Needs.tsx"));
 const Profile = lazy(() => import("./pages/Profile"));
 const AppShell = lazy(() => import("./components/AppShell.tsx"));
-const AuthPage = lazy(() => import("./pages/Auth"));
 const Admin = lazy(() => import("./pages/Admin"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail.tsx"));
 const SafetyListenerPage = lazy(() => import("./pages/SafetyListenerPage.tsx"));
 const RecordingsPage = lazy(() => import("./pages/RecordingsPage.tsx"));
 
 function RequireAuth({ children }: { children: React.ReactElement }) {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{ padding: 16 }}>Loading…</div>;
-  if (!user) return <Navigate to="/auth" replace />;
-  return children;
-}
-
-function RequireVerified({ children }: { children: React.ReactElement }) {
-  const { user } = useAuth();
-  if (!user) return null; // Parent handles auth
-  if (!user.emailVerified) return <Navigate to="/verify" replace />;
+  // Anonymous sign-in happens automatically; just wait for it
+  if (loading || !user) return <div style={{ padding: 16 }}>Loading…</div>;
   return children;
 }
 
@@ -114,94 +106,32 @@ const App = () => {
   };
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <SyncBridge />
+      <ThemeProvider>
+        <AuthProvider>
+          <SyncBridge />
         <Suspense fallback={<div style={{ padding: 16 }}>Loading…</div>}>
           <Routes>
-            {/* Public auth route */}
-            <Route path="/auth" element={<AuthPage />} />
+            {/* Legacy auth route redirects home (no login needed) */}
+            <Route path="/auth" element={<Navigate to="/" replace />} />
 
-            {/* Protected app */}
+            {/* App */}
             <Route
               path="/*"
               element={
                 <RequireAuth>
                   <AppShell>
                     <Routes>
-                      {/* Allow unverified users to visit the verify screen */}
-                      <Route path="/verify" element={<VerifyEmail />} />
-                      {/* All other routes require verified emails */}
-                      <Route
-                        path="/"
-                        element={
-                          <RequireVerified>
-                            <HomeOrAdmin />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/levels"
-                        element={
-                          <RequireVerified>
-                            <LevelSelect />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/level1"
-                        element={
-                          <RequireVerified>
-                            <Level1Needs />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/level2"
-                        element={
-                          <RequireVerified>
-                            <Level2Needs />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/profile"
-                        element={
-                          <RequireVerified>
-                            <Profile />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/map"
-                        element={
-                          <RequireVerified>
-                            <MapView />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/admin"
-                        element={
-                          <RequireVerified>
-                            <Admin />
-                          </RequireVerified>
-                        }
-                      />
-                      <Route
-                        path="/safety"
-                        element={
-                          <RequireVerified>
-                            <SafetyListenerPage />
-                          </RequireVerified>
-                        }
-                      />
+                      <Route path="/" element={<HomeOrAdmin />} />
+                      <Route path="/levels" element={<LevelSelect />} />
+                      <Route path="/level1" element={<Level1Needs />} />
+                      <Route path="/level2" element={<Level2Needs />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/map" element={<MapView />} />
+                      <Route path="/admin" element={<Admin />} />
+                      <Route path="/safety" element={<SafetyListenerPage />} />
                       <Route
                         path="/recordings"
-                        element={
-                          <RequireVerified>
-                            <RecordingsPage />
-                          </RequireVerified>
-                        }
+                        element={<RecordingsPage />}
                       />
                     </Routes>
                   </AppShell>
@@ -210,7 +140,8 @@ const App = () => {
             />
           </Routes>
         </Suspense>
-      </AuthProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };

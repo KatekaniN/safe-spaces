@@ -52,9 +52,9 @@ export default function InstallPrompt() {
 			onClick={onInstall}
 			title="Install this app"
 			style={{
-				border: "1.5px solid #8764C1",
-				background: "#fff",
-				color: "#8764C1",
+				border: "1.5px solid var(--brand)",
+				background: "var(--surface)",
+				color: "var(--brand)",
 				fontWeight: 700,
 				borderRadius: 10,
 				padding: "8px 14px",

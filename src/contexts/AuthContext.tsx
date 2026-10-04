@@ -8,6 +8,7 @@ import React, {
 import { auth, googleProvider } from "../lib/firebase";
 import {
   onAuthStateChanged,
+  signInAnonymously,
   signInWithPopup,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -35,9 +36,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUser(u);
-      setLoading(false);
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      if (u) {
+        setUser(u);
+        setLoading(false);
+        return;
+      }
+      // Demo mode: sign in invisibly so no account is needed.
+      try {
+        await signInAnonymously(auth); // retriggers onAuthStateChanged with the anon user
+      } catch (e) {
+        console.error("Anonymous sign-in failed", e);
+        setUser(null);
+        setLoading(false);
+      }
     });
     return () => unsub();
   }, []);

@@ -18,6 +18,7 @@ import { useDirections } from "../hooks/useDirections";
 import { useTravelModeDetector } from "../hooks/useTravelModeDetector";
 import { usePlaceDetails } from "../hooks/usePlaceDetails";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import {
   type Favorite,
   listFavorites,
@@ -254,10 +255,10 @@ const PlacesFetcher = ({
 
         const hasV3Nearby = !!Place?.searchNearby;
 
-        // Larger radius to cover more area (100km)
+        // searchNearby caps radius at 50km
         const circleRestriction: google.maps.CircleLiteral = {
           center,
-          radius: 100000, // 80km radius
+          radius: 50000,
         };
         const fields: string[] = [
           "id",
@@ -269,6 +270,11 @@ const PlacesFetcher = ({
 
         console.log(`Fetching places around: ${center.lat}, ${center.lng}`);
 
+        // Legacy types not supported by v3 searchNearby, mapped to v3 equivalents
+        const v3TypeMap: Record<string, string[]> = {
+          place_of_worship: ["church", "mosque", "synagogue", "hindu_temple"],
+        };
+
         const placeBuckets = await Promise.all(
           types.map(async (type) => {
             // Try v3 first
@@ -276,11 +282,9 @@ const PlacesFetcher = ({
               try {
                 const { places } = await Place.searchNearby({
                   locationRestriction: circleRestriction,
-                  includedPrimaryTypes: [type],
+                  includedPrimaryTypes: v3TypeMap[type] ?? [type],
                   maxResultCount: 20,
                   fields,
-                  // @ts-ignore openNow is supported in Places searchNearby
-                  openNow: !!openNow,
                 });
 
                 let results = (places || []).map((place: any) => ({
@@ -737,10 +741,13 @@ export const SafeSpacesMapWrapper = ({
   allowedTypes?: string[];
   openNow?: boolean;
 }) => {
+  const { theme } = useTheme();
   return (
     <Map
+      key={theme}
       defaultZoom={13}
       mapId="7b19dfb1c51c3fd7b868ac32"
+      colorScheme={theme === "dark" ? "DARK" : "LIGHT"}
       defaultCenter={{ lat: -26.195246, lng: 28.034088 }}
       style={{ width: "100%", height: "100%" }}
       onCameraChanged={(ev: MapCameraChangedEvent) =>

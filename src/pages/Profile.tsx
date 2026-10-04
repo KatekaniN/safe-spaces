@@ -28,9 +28,9 @@ import {
 import { normalizePhone } from "../lib/phone";
 
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
 };
 
 function Modal({
@@ -63,10 +63,10 @@ function Modal({
       <div
         style={{
           width: "min(680px, 100%)",
-          background: "#fff",
+          background: "var(--surface)",
           borderRadius: 16,
           boxShadow: "0 8px 40px rgba(0,0,0,0.15)",
-          border: "2px solid #E5E7EB",
+          border: "1px solid var(--border-strong)",
           maxHeight: "90dvh",
           display: "flex",
           flexDirection: "column",
@@ -80,10 +80,10 @@ function Modal({
             alignItems: "center",
             justifyContent: "space-between",
             padding: "14px 16px",
-            borderBottom: "1px solid #F3F4F6",
+            borderBottom: "1px solid var(--surface-3)",
           }}
         >
-          <strong style={{ color: "#1F2937" }}>{title}</strong>
+          <strong style={{ color: "var(--text)" }}>{title}</strong>
           {showHeaderClose && (
             <button
               onClick={onClose}
@@ -445,7 +445,7 @@ export default function Profile() {
       style={{
         minHeight: "calc(100dvh - 60px)",
         padding: "20px 16px calc(24px + env(safe-area-inset-bottom))",
-        background: "#FAFAFA",
+        background: "var(--surface-2)",
       }}
     >
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -461,7 +461,7 @@ export default function Profile() {
           >
             Your Profile
           </h1>
-          <p style={{ color: "#6B7280", margin: "8px 0 0", fontSize: 15 }}>
+          <p style={{ color: "var(--muted)", margin: "8px 0 0", fontSize: 15 }}>
             Keep your details and emergency info up to date. Your data is
             private to your account.
           </p>
@@ -470,15 +470,15 @@ export default function Profile() {
         {!loading && !user && (
           <div
             style={{
-              background: "#fff",
-              border: "2px solid #E5E7EB",
+              background: "var(--surface)",
+              border: "1px solid var(--border-strong)",
               borderRadius: 16,
               padding: 16,
               marginBottom: 12,
               textAlign: "center",
             }}
           >
-            <p style={{ color: "#6B7280", margin: "0 0 12px", fontSize: 14 }}>
+            <p style={{ color: "var(--muted)", margin: "0 0 12px", fontSize: 14 }}>
               Sign in to save your profile, contacts, and medical info securely.
             </p>
             <button onClick={signIn} style={pillBtn()}>
@@ -497,11 +497,11 @@ export default function Profile() {
           {/* My Details */}
           <section
             style={{
-              background: "#fff",
-              border: "2px solid #E5E7EB",
+              background: "var(--surface)",
+              border: "1px solid var(--border-strong)",
               borderRadius: 20,
               padding: 16,
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+              boxShadow: "none",
             }}
           >
             <div
@@ -522,7 +522,7 @@ export default function Profile() {
                 {PencilIcon({ color: BRAND.pink })}
               </button>
             </div>
-            <p style={{ color: "#6B7280", margin: 0, fontSize: 14 }}>
+            <p style={{ color: "var(--muted)", margin: 0, fontSize: 14 }}>
               {user ? (
                 <>
                   {profile?.name || user.displayName || "Name not set"} ·{" "}
@@ -782,8 +782,8 @@ export default function Profile() {
           {contacts.length >= MAX_CONTACTS && (
             <div
               style={{
-                background: "#FEF3C7",
-                color: "#92400E",
+                background: "var(--warn-tint)",
+                color: "var(--warn-text)",
                 padding: "10px 12px",
                 borderRadius: 10,
                 fontSize: 13,
@@ -796,8 +796,8 @@ export default function Profile() {
           {contactError && (
             <div
               style={{
-                background: "#FEE2E2",
-                color: "#991B1B",
+                background: "var(--danger-tint)",
+                color: "var(--danger-text)",
                 padding: "10px 12px",
                 borderRadius: 10,
                 fontSize: 13,
@@ -929,7 +929,7 @@ export default function Profile() {
 
           {contacts.length > 0 && (
             <div style={{ marginTop: 8 }}>
-              <strong style={{ color: "#111827", fontSize: 14 }}>
+              <strong style={{ color: "var(--text)", fontSize: 14 }}>
                 Your Contacts
               </strong>
               <ul
@@ -945,7 +945,7 @@ export default function Profile() {
                   <li
                     key={c.id}
                     style={{
-                      border: "1px solid #E5E7EB",
+                      border: "1px solid var(--border)",
                       borderRadius: 10,
                       padding: 12,
                       display: "flex",
@@ -957,7 +957,7 @@ export default function Profile() {
                     <div style={{ minWidth: 0 }}>
                       <div
                         style={{
-                          color: "#1F2937",
+                          color: "var(--text)",
                           fontWeight: 700,
                           fontSize: 14,
                           overflow: "hidden",
@@ -966,7 +966,7 @@ export default function Profile() {
                       >
                         {c.name} {c.relation ? `· ${c.relation}` : ""}
                       </div>
-                      <div style={{ color: "#6B7280", fontSize: 13 }}>
+                      <div style={{ color: "var(--muted)", fontSize: 13 }}>
                         {c.phone}
                       </div>
                     </div>
@@ -1078,7 +1078,7 @@ export default function Profile() {
               style={{
                 ...inputStyle(),
                 paddingRight: 28,
-                ...(medErrors.bloodType ? { borderColor: "#EF4444" } : {}),
+                ...(medErrors.bloodType ? { borderColor: "var(--danger)" } : {}),
               }}
             >
               <option value="">Select blood type</option>
@@ -1089,7 +1089,7 @@ export default function Profile() {
               ))}
             </select>
             {medErrors.bloodType && (
-              <div style={{ color: "#B91C1C", fontSize: 12, marginTop: 4 }}>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12, marginTop: 4 }}>
                 {medErrors.bloodType}
               </div>
             )}
@@ -1159,7 +1159,7 @@ export default function Profile() {
                 ...inputStyle(),
                 paddingRight: 28,
                 ...(medErrors.medicalAidProvider
-                  ? { borderColor: "#EF4444" }
+                  ? { borderColor: "var(--danger)" }
                   : {}),
               }}
             >
@@ -1181,7 +1181,7 @@ export default function Profile() {
                   style={{
                     ...inputStyle(),
                     ...(medErrors.medicalAidProvider
-                      ? { borderColor: "#EF4444" }
+                      ? { borderColor: "var(--danger)" }
                       : {}),
                   }}
                 />
@@ -1203,12 +1203,12 @@ export default function Profile() {
               style={{
                 ...inputStyle(),
                 ...(medErrors.medicalAidNumber
-                  ? { borderColor: "#EF4444" }
+                  ? { borderColor: "var(--danger)" }
                   : {}),
               }}
             />
             {medErrors.medicalAidNumber && (
-              <div style={{ color: "#B91C1C", fontSize: 12, marginTop: 4 }}>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12, marginTop: 4 }}>
                 {medErrors.medicalAidNumber}
               </div>
             )}
@@ -1221,7 +1221,7 @@ export default function Profile() {
                 setMedForm((f) => ({ ...f, organDonor: e.target.checked }))
               }
             />
-            <span style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}>
+            <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
               I’m an organ donor
             </span>
           </label>
@@ -1345,7 +1345,7 @@ export default function Profile() {
             style={{
               display: "grid",
               gap: 10,
-              borderBottom: "1px solid #F3F4F6",
+              borderBottom: "1px solid var(--surface-3)",
               paddingBottom: 12,
             }}
           >
@@ -1417,7 +1417,7 @@ export default function Profile() {
                   style={{
                     ...inputStyle(),
                     paddingRight: 28,
-                    ...(incErrors.category ? { borderColor: "#EF4444" } : {}),
+                    ...(incErrors.category ? { borderColor: "var(--danger)" } : {}),
                   }}
                 >
                   <option value="">Select category</option>
@@ -1428,7 +1428,7 @@ export default function Profile() {
                   ))}
                 </select>
                 {incErrors.category && (
-                  <div style={{ color: "#B91C1C", fontSize: 12, marginTop: 4 }}>
+                  <div style={{ color: "var(--danger-strong)", fontSize: 12, marginTop: 4 }}>
                     {incErrors.category}
                   </div>
                 )}
@@ -1454,7 +1454,7 @@ export default function Profile() {
                   style={{
                     ...inputStyle(),
                     paddingRight: 28,
-                    ...(incErrors.province ? { borderColor: "#EF4444" } : {}),
+                    ...(incErrors.province ? { borderColor: "var(--danger)" } : {}),
                   }}
                 >
                   <option value="">Select province</option>
@@ -1475,13 +1475,13 @@ export default function Profile() {
                   aria-invalid={!!incErrors.occurredAt}
                   style={{
                     ...inputStyle(),
-                    ...(incErrors.occurredAt ? { borderColor: "#EF4444" } : {}),
+                    ...(incErrors.occurredAt ? { borderColor: "var(--danger)" } : {}),
                   }}
                 />
               </Field>
             </div>
             {(incErrors.province || incErrors.occurredAt) && (
-              <div style={{ color: "#B91C1C", fontSize: 12 }}>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12 }}>
                 {incErrors.province || incErrors.occurredAt}
               </div>
             )}
@@ -1515,7 +1515,7 @@ export default function Profile() {
                   }
                 />
                 <span
-                  style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                 >
                   Reported to SAPS
                 </span>
@@ -1532,7 +1532,7 @@ export default function Profile() {
                   }
                 />
                 <span
-                  style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                 >
                   Suspect known
                 </span>
@@ -1549,7 +1549,7 @@ export default function Profile() {
                   }
                 />
                 <span
-                  style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                 >
                   Weapon involved
                 </span>
@@ -1596,7 +1596,7 @@ export default function Profile() {
               )}
             </div>
             {incForm.reportedToSAPS && incErrors.reported && (
-              <div style={{ color: "#B91C1C", fontSize: 12 }}>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12 }}>
                 {incErrors.reported}
               </div>
             )}
@@ -1615,7 +1615,7 @@ export default function Profile() {
             )}
           </form>
           <div>
-            <strong style={{ color: "#111827", fontSize: 14 }}>
+            <strong style={{ color: "var(--text)", fontSize: 14 }}>
               Recent incidents
             </strong>
             <ul
@@ -1631,7 +1631,7 @@ export default function Profile() {
                 <li
                   key={i.id}
                   style={{
-                    border: "1px solid #E5E7EB",
+                    border: "1px solid var(--border)",
                     borderRadius: 10,
                     padding: 12,
                   }}
@@ -1645,7 +1645,7 @@ export default function Profile() {
                   >
                     <div
                       style={{
-                        color: "#1F2937",
+                        color: "var(--text)",
                         fontWeight: 700,
                         fontSize: 14,
                       }}
@@ -1653,7 +1653,7 @@ export default function Profile() {
                       {i.type}
                       {i.category ? ` · ${i.category}` : ""}
                     </div>
-                    <div style={{ color: "#6B7280", fontSize: 12 }}>
+                    <div style={{ color: "var(--muted)", fontSize: 12 }}>
                       {i.occurredAt
                         ? `Occurred: ${formatDate(i.occurredAt)} · `
                         : ""}
@@ -1662,7 +1662,7 @@ export default function Profile() {
                   </div>
                   {(i.province || i.caseNumber) && (
                     <div
-                      style={{ color: "#6B7280", fontSize: 12, marginTop: 2 }}
+                      style={{ color: "var(--muted)", fontSize: 12, marginTop: 2 }}
                     >
                       {i.province ? `${i.province}` : ""}
                       {i.province && i.caseNumber ? " · " : ""}
@@ -1671,7 +1671,7 @@ export default function Profile() {
                   )}
                   {i.notes && (
                     <div
-                      style={{ color: "#374151", fontSize: 13, marginTop: 4 }}
+                      style={{ color: "var(--text-2)", fontSize: 13, marginTop: 4 }}
                     >
                       {i.notes}
                     </div>
@@ -1679,7 +1679,7 @@ export default function Profile() {
                 </li>
               ))}
               {incidents.length === 0 && (
-                <li style={{ color: "#6B7280", fontSize: 13 }}>
+                <li style={{ color: "var(--muted)", fontSize: 13 }}>
                   No incidents logged yet.
                 </li>
               )}
@@ -1718,11 +1718,11 @@ export default function Profile() {
               alignItems: "center",
               justifyContent: "space-between",
               padding: "10px 12px",
-              border: "1.5px solid #E5E7EB",
+              border: "1px solid var(--border-strong)",
               borderRadius: 10,
             }}
           >
-            <span style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}>
+            <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
               Push notifications
             </span>
             <input
@@ -1743,11 +1743,11 @@ export default function Profile() {
               alignItems: "center",
               justifyContent: "space-between",
               padding: "10px 12px",
-              border: "1.5px solid #E5E7EB",
+              border: "1px solid var(--border-strong)",
               borderRadius: 10,
             }}
           >
-            <span style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}>
+            <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
               Share location for safety features
             </span>
             <input
@@ -1834,7 +1834,7 @@ export default function Profile() {
               style={{
                 ...inputStyle(),
                 paddingRight: 28,
-                ...(issueErrors.category ? { borderColor: "#EF4444" } : {}),
+                ...(issueErrors.category ? { borderColor: "var(--danger)" } : {}),
               }}
             >
               <option value="place">Place</option>
@@ -1855,12 +1855,12 @@ export default function Profile() {
               style={{
                 ...inputStyle(),
                 resize: "vertical",
-                ...(issueErrors.details ? { borderColor: "#EF4444" } : {}),
+                ...(issueErrors.details ? { borderColor: "var(--danger)" } : {}),
               }}
             />
           </Field>
           {(issueErrors.category || issueErrors.details) && (
-            <div style={{ color: "#B91C1C", fontSize: 12 }}>
+            <div style={{ color: "var(--danger-strong)", fontSize: 12 }}>
               {issueErrors.category || issueErrors.details}
             </div>
           )}
@@ -1915,7 +1915,7 @@ export default function Profile() {
             </div>
           </div>
           {issueMsg && (
-            <div style={{ color: "#374151", fontSize: 13 }}>{issueMsg}</div>
+            <div style={{ color: "var(--text-2)", fontSize: 13 }}>{issueMsg}</div>
           )}
         </form>
       </Modal>
@@ -1965,7 +1965,7 @@ function FavoritesList({
 
   if (!userId) {
     return (
-      <div style={{ color: "#6B7280", fontSize: 14 }}>
+      <div style={{ color: "var(--muted)", fontSize: 14 }}>
         Sign in to view and manage your favorite spaces.
       </div>
     );
@@ -1974,13 +1974,13 @@ function FavoritesList({
   return (
     <div style={{ display: "grid", gap: 10 }}>
       {loading && (
-        <div style={{ color: "#6B7280", fontSize: 13 }}>Loading…</div>
+        <div style={{ color: "var(--muted)", fontSize: 13 }}>Loading…</div>
       )}
       {error && (
         <div
           style={{
-            background: "#FEE2E2",
-            color: "#991B1B",
+            background: "var(--danger-tint)",
+            color: "var(--danger-text)",
             padding: "10px 12px",
             borderRadius: 10,
             fontSize: 13,
@@ -2002,7 +2002,7 @@ function FavoritesList({
           <li
             key={f.id}
             style={{
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--border)",
               borderRadius: 10,
               padding: 12,
               display: "flex",
@@ -2014,7 +2014,7 @@ function FavoritesList({
             <div style={{ minWidth: 0 }}>
               <div
                 style={{
-                  color: "#1F2937",
+                  color: "var(--text)",
                   fontWeight: 700,
                   fontSize: 14,
                   overflow: "hidden",
@@ -2023,7 +2023,7 @@ function FavoritesList({
               >
                 {f.name} {f.type ? `· ${f.type}` : ""}
               </div>
-              <div style={{ color: "#6B7280", fontSize: 12 }}>
+              <div style={{ color: "var(--muted)", fontSize: 12 }}>
                 {f.address ||
                   (f.location
                     ? `${f.location.lat.toFixed(4)}, ${f.location.lng.toFixed(
@@ -2046,15 +2046,15 @@ function FavoritesList({
                     setFavorites(prev);
                   }
                 }}
-                style={iconBtn("#EC96BE")}
+                style={iconBtn("var(--brand-pink)")}
               >
-                {TrashIcon({ color: "#EC96BE" })}
+                {TrashIcon({ color: "var(--brand-pink)" })}
               </button>
             </div>
           </li>
         ))}
         {favorites.length === 0 && !loading && (
-          <li style={{ color: "#6B7280", fontSize: 13 }}>
+          <li style={{ color: "var(--muted)", fontSize: 13 }}>
             No favorite spaces saved yet.
           </li>
         )}
@@ -2066,11 +2066,11 @@ function FavoritesList({
 // Small styling helpers
 function card(): React.CSSProperties {
   return {
-    background: "#fff",
-    border: "2px solid #E5E7EB",
+    background: "var(--surface)",
+    border: "1px solid var(--border-strong)",
     borderRadius: 20,
     padding: 16,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+    boxShadow: "none",
   } as React.CSSProperties;
 }
 
@@ -2087,12 +2087,12 @@ function pillBtn(opts?: {
   color?: string;
   outline?: boolean;
 }): React.CSSProperties {
-  const color = opts?.color || "#8764C1";
+  const color = opts?.color || "var(--brand)";
   const outline = opts?.outline || false;
   return {
     border: `1.5px solid ${color}`,
     background: outline ? "transparent" : color,
-    color: outline ? color : "#fff",
+    color: outline ? color : "var(--on-brand)",
     borderRadius: 12,
     padding: "8px 12px",
     fontWeight: 700,
@@ -2101,7 +2101,7 @@ function pillBtn(opts?: {
 }
 
 function muted(): React.CSSProperties {
-  return { color: "#6B7280", margin: 0, fontSize: 14 } as React.CSSProperties;
+  return { color: "var(--muted)", margin: 0, fontSize: 14 } as React.CSSProperties;
 }
 
 function Field({
@@ -2113,7 +2113,7 @@ function Field({
 }) {
   return (
     <label style={{ display: "grid", gap: 6 }}>
-      <span style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}>
+      <span style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}>
         {label}
       </span>
       {children}
@@ -2123,7 +2123,7 @@ function Field({
 
 function inputStyle(): React.CSSProperties {
   return {
-    border: "1.5px solid #E5E7EB",
+    border: "1px solid var(--border-strong)",
     borderRadius: 10,
     padding: "10px 12px",
     fontSize: 14,
@@ -2159,7 +2159,7 @@ function iconBtn(color: string): React.CSSProperties {
     height: 36,
     borderRadius: 10,
     border: `1.5px solid ${color}`,
-    background: "#fff",
+    background: "var(--surface)",
     color,
     cursor: "pointer",
   } as React.CSSProperties;

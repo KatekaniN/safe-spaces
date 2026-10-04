@@ -1,25 +1,67 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import logoUrl from "../assets/safe-spaces.png";
+import { APIProvider } from "@vis.gl/react-google-maps";
 import { useAuth } from "../contexts/AuthContext";
+import { useGeolocation } from "../hooks/useGeolocation";
+import { NearestSanctuaries } from "../components/NearestSanctuaries";
 import {
   createCrimeReport,
   type CrimeReport,
   addToWaitlist,
 } from "../lib/data";
 
+// Small inline icon for chips and status rows
+function ChipIcon({ d }: { d: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="15"
+      height="15"
+      fill="currentColor"
+      aria-hidden
+      style={{ flexShrink: 0, opacity: 0.75 }}
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
+// Map free-text intent to a support level + need key
+function matchNeed(q: string): { level: string; need: string } {
+  const t = q.toLowerCase();
+  const has = (...w: string[]) => w.some((x) => t.includes(x));
+  if (has("police", "security", "guard", "danger", "threat", "follow", "stalk"))
+    return { level: "l2", need: "police_security" };
+  if (
+    has("medic", "medicine", "pharmacy", "hurt", "injur", "first aid", "sick", "clinic", "hospital")
+  )
+    return { level: "l1", need: "minor_medical" };
+  if (has("charge", "wifi", "wi-fi", "phone", "battery"))
+    return { level: "l1", need: "call_charge_wifi" };
+  if (has("talk", "report", "counsel", "someone"))
+    return { level: "l1", need: "talk_report" };
+  if (has("transport", "escort", "walk", "taxi", "ride", "bus", "train"))
+    return { level: "l1", need: "escort_transport" };
+  return { level: "l1", need: "basic_comfort" };
+}
+
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
-  blueLight: "#EFF5FC",
-  pinkLight: "#FDF3F8",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
+  purpleLight: "var(--brand-tint)",
+  blueLight: "var(--blue-tint)",
+  pinkLight: "var(--pink-tint)",
 };
 
 export default function Home() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchText, setSearchText] = useState("");
+  const [count, setCount] = useState<number | null>(null);
+  const { location: loc, loading: locLoading } = useGeolocation({
+    watch: false,
+  });
   const [showReport, setShowReport] = useState(false);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -84,196 +126,325 @@ export default function Home() {
     <div
       style={{
         minHeight: "calc(100dvh - 60px)",
-        background: "#FAFAFA",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
+        background: "transparent",
+        padding: "24px 16px 48px",
       }}
     >
-      <div style={{ maxWidth: 520, width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <img
-            src={logoUrl}
-            alt="Safe Spaces"
-            width={180}
-            height={180}
-            style={{
-              display: "inline-block",
-              marginBottom: 16,
-              filter: "drop-shadow(0 2px 8px rgba(135,100,193,0.15))",
-            }}
-          />
-          <h1
-            style={{
-              color: BRAND.purple,
-              margin: "0 0 12px 0",
-              fontSize: 32,
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            You're Safe Here
-          </h1>
-          <p
-            style={{
-              color: "#6B7280",
-              fontSize: 16,
-              lineHeight: 1.6,
-              margin: 0,
-            }}
-          >
-            Find nearby places that can help you based on the kind of support
-            you need right now.
-          </p>
-        </div>
-
-        <div
-          style={{
-            background: "#fff",
-            borderRadius: 20,
-            padding: "28px 24px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            border: "2px solid #E5E7EB",
-          }}
-        >
-          <div style={{ display: "grid", gap: 16, marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: BRAND.purple,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
-                </svg>
-              </div>
-              <div style={{ textAlign: "left" }}>
-                <strong
-                  style={{
-                    color: "#1F2937",
-                    display: "block",
-                    fontSize: 15,
-                    fontWeight: 700,
-                  }}
-                >
-                  Confidential & Safe
-                </strong>
-                <span style={{ color: "#6B7280", fontSize: 13 }}>
-                  Your privacy matters
-                </span>
-              </div>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  background: BRAND.blue,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="white">
-                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                </svg>
-              </div>
-              <div style={{ textAlign: "left" }}>
-                <strong
-                  style={{
-                    color: "#1F2937",
-                    display: "block",
-                    fontSize: 15,
-                    fontWeight: 700,
-                  }}
-                >
-                  Always Nearby
-                </strong>
-                <span style={{ color: "#6B7280", fontSize: 13 }}>
-                  Find support close to you
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <Link to="/levels" style={{ textDecoration: "none" }}>
-            <button
+      <div style={{ maxWidth: 1100, width: "100%", margin: "0 auto" }}>
+        <div className="home-hero">
+          {/* Left: editorial hero + search */}
+          <div>
+            <span className="eyebrow" style={{ marginBottom: 14 }}>
+              Safe space finder · No sign-in needed
+            </span>
+            <h1 className="hero-title" style={{ color: "var(--text)" }}>
+              Where would you feel most{" "}
+              <span style={{ color: "var(--brand)" }}>protected</span> right
+              now?
+            </h1>
+            <p
               style={{
-                width: "100%",
-                padding: "16px 20px",
-                borderRadius: 16,
-                background: BRAND.purple,
-                color: "#fff",
-                border: "none",
-                fontWeight: 700,
-                fontSize: 17,
-                boxShadow: `0 4px 16px ${BRAND.purple}40`,
-                cursor: "pointer",
-                transition: "transform 0.2s ease, box-shadow 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = `0 6px 20px ${BRAND.purple}50`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = `0 4px 16px ${BRAND.purple}40`;
+                color: "var(--muted)",
+                fontSize: 16,
+                lineHeight: 1.6,
+                margin: "0 0 22px",
+                maxWidth: 460,
               }}
             >
-              Find Safe Space Now
+              Find verified safe places nearby — a short walk away — based on
+              the kind of support you need.
+            </p>
+          {/* Search */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const { level, need } = matchNeed(searchText);
+              navigate(`/map?level=${level}&need=${need}`);
+            }}
+            style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}
+          >
+            <input
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              placeholder="What do you need? e.g. rest, medical, security desk"
+              aria-label="What do you need right now?"
+              style={{
+                flex: "1 1 240px",
+                padding: "14px 18px",
+                borderRadius: 12,
+                border: "1px solid var(--glass-border)",
+                background: "var(--surface)",
+                color: "var(--text)",
+                fontSize: 15,
+                outline: "none",
+              }}
+            />
+            <button
+              type="submit"
+              style={{
+                padding: "14px 24px",
+                borderRadius: 12,
+                border: "none",
+                background: "var(--brand)",
+                color: "var(--on-brand)",
+                fontWeight: 700,
+                fontSize: 15,
+                cursor: "pointer",
+              }}
+            >
+              Find
             </button>
-          </Link>
+          </form>
 
-          {/* Report Incident secondary CTA */}
+          {/* Quick picks */}
+          <div style={{ marginBottom: 18 }}>
+            <p
+              style={{
+                margin: "0 0 12px 0",
+                color: "var(--text-2)",
+                fontSize: 14,
+                fontWeight: 700,
+              }}
+            >
+              Or pick one:
+            </p>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: 8,
+              }}
+            >
+              <Link className="chip" to="/map?level=l1&need=basic_comfort">
+                <ChipIcon d="M4 12h16v6H4zm2-5h12v4H6z" /> Somewhere to rest
+              </Link>
+              <Link className="chip" to="/map?level=l1&need=minor_medical">
+                <ChipIcon d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z" /> Medical help
+              </Link>
+              <Link className="chip" to="/map?level=l2&need=police_security">
+                <ChipIcon d="M12 2L4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z" /> Police
+              </Link>
+              <Link
+                className="chip"
+                to="/map?level=l1&need=basic_comfort&openNow=1"
+              >
+                <ChipIcon d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 10.6V7h-2v6h6v-2h-4z" /> Open right now
+              </Link>
+            </div>
+          </div>
+          </div>
+
+          {/* Right: live status panel */}
+          <aside
+            className="glass"
+            style={{
+              borderRadius: 24,
+              padding: "24px 22px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+            }}
+          >
+            <span className="eyebrow">Live status</span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                fontWeight: 700,
+                fontSize: 16,
+                color: "var(--text)",
+              }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: "50%",
+                  background: loc ? "var(--success)" : "var(--muted)",
+                  flexShrink: 0,
+                }}
+              />
+              {loc
+                ? count != null
+                  ? `${count} safe space${count === 1 ? "" : "s"} within reach`
+                  : "Location locked in"
+                : locLoading
+                ? "Finding you…"
+                : "Location unavailable"}
+            </div>
+            <div
+              style={{
+                borderTop: "1px solid var(--border)",
+                paddingTop: 14,
+                display: "grid",
+                gap: 10,
+                fontSize: 13.5,
+                color: "var(--muted)",
+              }}
+            >
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <ChipIcon d="M12 1a5 5 0 00-5 5v3H6a2 2 0 00-2 2v9a2 2 0 002 2h12a2 2 0 002-2v-9a2 2 0 00-2-2h-1V6a5 5 0 00-5-5zm-3 8V6a3 3 0 016 0v3H9z" />
+                Anonymous — no account or number needed
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <ChipIcon d="M12 2a6 6 0 016 6c0 4.5-6 12-6 12S6 12.5 6 8a6 6 0 016-6zm0 8a2 2 0 100-4 2 2 0 000 4z" />
+                Your location never leaves this device
+              </span>
+              <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <ChipIcon d="M12 14a3 3 0 003-3V6a3 3 0 10-6 0v5a3 3 0 003 3zm5-3a5 5 0 01-10 0H5a7 7 0 006 6.9V21h2v-3.1A7 7 0 0019 11h-2z" />
+                Recording Shield ready if things escalate
+              </span>
+            </div>
+          </aside>
+        </div>
+
+        {/* Action bento */}
+        <section className="bento" aria-label="Ways we can help">
+          <Link to="/level1" className="tile span2">
+            <span className="eyebrow">Everyday support</span>
+            <div>
+              <h2
+                style={{
+                  margin: "0 0 6px",
+                  fontSize: 24,
+                  color: "var(--text)",
+                }}
+              >
+                A safe place nearby
+              </h2>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>
+                Rest, charge, get home — calm public places with staff.
+              </p>
+            </div>
+            <span className="tile-arrow">→</span>
+          </Link>
+          <Link
+            to="/level2"
+            className="tile span2"
+            style={{ borderColor: "color-mix(in srgb, var(--brand-pink) 55%, transparent)" }}
+          >
+            <span className="eyebrow" style={{ color: "var(--brand-pink)" }}>
+              Emergency
+            </span>
+            <div>
+              <h2
+                style={{
+                  margin: "0 0 6px",
+                  fontSize: 24,
+                  color: "var(--text)",
+                }}
+              >
+                Urgent help now
+              </h2>
+              <p style={{ margin: 0, color: "var(--muted)", fontSize: 14 }}>
+                Police, hospitals, fire & rescue — official services, fast.
+              </p>
+            </div>
+            <span className="tile-arrow">→</span>
+          </Link>
+          <Link to="/safety" className="tile">
+            <span className="eyebrow">Tool</span>
+            <h3 style={{ margin: 0, fontSize: 16, color: "var(--text)" }}>
+              Recording Shield
+            </h3>
+            <span className="tile-arrow">→</span>
+          </Link>
           <button
+            type="button"
+            className="tile"
             onClick={() => {
               setErrors({});
               setMsg(null);
               setShowReport(true);
             }}
+          >
+            <span className="eyebrow">Tool</span>
+            <h3 style={{ margin: 0, fontSize: 16, color: "var(--text)" }}>
+              Report an incident
+            </h3>
+            <span className="tile-arrow">→</span>
+          </button>
+          <Link to="/profile" className="tile">
+            <span className="eyebrow">Yours</span>
+            <h3 style={{ margin: 0, fontSize: 16, color: "var(--text)" }}>
+              Saved places
+            </h3>
+            <span className="tile-arrow">→</span>
+          </Link>
+          <Link to="/map?level=l1&need=basic_comfort&openNow=1" className="tile">
+            <span className="eyebrow">Fast</span>
+            <h3 style={{ margin: 0, fontSize: 16, color: "var(--text)" }}>
+              Open now near me
+            </h3>
+            <span className="tile-arrow">→</span>
+          </Link>
+        </section>
+
+        {/* Nearest sanctuaries */}
+        {loc ? (
+          <section style={{ marginTop: 32 }}>
+            <div style={{ marginBottom: 16 }}>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  color: "var(--brand)",
+                }}
+              >
+                Nearest to you
+              </span>
+              <h2
+                style={{
+                  margin: "4px 0 0",
+                  fontSize: 22,
+                  fontWeight: 800,
+                  color: "var(--text)",
+                }}
+              >
+                Verified safe spaces
+              </h2>
+            </div>
+            <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+              <NearestSanctuaries center={loc} onCount={setCount} />
+            </APIProvider>
+          </section>
+        ) : (
+          <p
             style={{
-              marginTop: 12,
-              width: "100%",
-              padding: "14px 20px",
-              borderRadius: 16,
-              background: "transparent",
-              color: BRAND.purple,
-              border: `2px solid ${BRAND.purple}`,
-              fontWeight: 800,
-              fontSize: 15,
-              cursor: "pointer",
+              marginTop: 24,
+              textAlign: "center",
+              color: "var(--muted)",
+              fontSize: 14,
             }}
           >
-            Report an Incident
-          </button>
-        </div>
+            Enable location to see the safe spaces nearest to you.
+          </p>
+        )}
       </div>
 
-      {/* Floating Panic Button */}
+      {/* Floating SOS Button */}
       <button
-        aria-label="Panic"
-        title="Panic"
+        aria-label="SOS — start emergency recording and alert contacts"
+        title="SOS"
         type="button"
         style={{
           position: "fixed",
           right: "calc(16px + env(safe-area-inset-right))",
           bottom: "calc(16px + env(safe-area-inset-bottom))",
-          width: 72,
-          height: 72,
-          borderRadius: "50%",
+          padding: "16px 26px",
+          borderRadius: 12,
           background: BRAND.pink,
-          color: "#fff",
+          color: "var(--on-brand)",
           border: "none",
-          display: "grid",
-          placeItems: "center",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 10,
+          fontWeight: 800,
+          fontSize: 17,
+          letterSpacing: "0.04em",
           boxShadow: `0 4px 16px ${BRAND.pink}50`,
           cursor: "pointer",
           zIndex: 30,
@@ -298,8 +469,8 @@ export default function Home() {
       >
         {/* Siren icon */}
         <svg
-          width="28"
-          height="28"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -338,6 +509,7 @@ export default function Home() {
             strokeLinecap="round"
           />
         </svg>
+        SOS
       </button>
 
       {/* Report Incident Modal */}
@@ -359,10 +531,10 @@ export default function Home() {
           <div
             style={{
               width: "min(680px, 100%)",
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 16,
               boxShadow: "0 8px 40px rgba(0,0,0,0.15)",
-              border: "2px solid #E5E7EB",
+              border: "1px solid var(--border-strong)",
               maxHeight: "90dvh",
               display: "flex",
               flexDirection: "column",
@@ -376,10 +548,10 @@ export default function Home() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: "14px 16px",
-                borderBottom: "1px solid #F3F4F6",
+                borderBottom: "1px solid var(--surface-3)",
               }}
             >
-              <strong style={{ color: "#1F2937" }}>Report Incident</strong>
+              <strong style={{ color: "var(--text)" }}>Report Incident</strong>
               <button
                 onClick={() => setShowReport(false)}
                 aria-label="Close"
@@ -458,7 +630,7 @@ export default function Home() {
               >
                 <label style={{ display: "grid", gap: 6 }}>
                   <span
-                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                    style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                   >
                     Status
                   </span>
@@ -468,7 +640,7 @@ export default function Home() {
                       setForm((f) => ({ ...f, status: e.target.value as any }))
                     }
                     style={{
-                      border: "1.5px solid #E5E7EB",
+                      border: "1px solid var(--border-strong)",
                       borderRadius: 12,
                       padding: 12,
                     }}
@@ -479,7 +651,7 @@ export default function Home() {
                 </label>
                 <label style={{ display: "grid", gap: 6 }}>
                   <span
-                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                    style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                   >
                     Type
                   </span>
@@ -489,7 +661,7 @@ export default function Home() {
                       setForm((f) => ({ ...f, type: e.target.value as any }))
                     }
                     style={{
-                      border: "1.5px solid #E5E7EB",
+                      border: "1px solid var(--border-strong)",
                       borderRadius: 12,
                       padding: 12,
                     }}
@@ -515,7 +687,7 @@ export default function Home() {
               {form.type === "Crime" && (
                 <label style={{ display: "grid", gap: 6 }}>
                   <span
-                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                    style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                   >
                     Crime category (SAPS)
                   </span>
@@ -526,10 +698,10 @@ export default function Home() {
                     }
                     aria-invalid={!!errors.category}
                     style={{
-                      border: "1.5px solid #E5E7EB",
+                      border: "1px solid var(--border-strong)",
                       borderRadius: 12,
                       padding: 12,
-                      ...(errors.category ? { borderColor: "#EF4444" } : {}),
+                      ...(errors.category ? { borderColor: "var(--danger)" } : {}),
                     }}
                   >
                     <option value="">Select category</option>
@@ -551,7 +723,7 @@ export default function Home() {
               >
                 <label style={{ display: "grid", gap: 6 }}>
                   <span
-                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                    style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                   >
                     Province
                   </span>
@@ -570,10 +742,10 @@ export default function Home() {
                     }}
                     aria-invalid={!!errors.province}
                     style={{
-                      border: "1.5px solid #E5E7EB",
+                      border: "1px solid var(--border-strong)",
                       borderRadius: 12,
                       padding: 12,
-                      ...(errors.province ? { borderColor: "#EF4444" } : {}),
+                      ...(errors.province ? { borderColor: "var(--danger)" } : {}),
                     }}
                   >
                     <option value="">Select province</option>
@@ -586,7 +758,7 @@ export default function Home() {
                 </label>
                 <label style={{ display: "grid", gap: 6 }}>
                   <span
-                    style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                    style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                   >
                     Date & time
                   </span>
@@ -598,10 +770,10 @@ export default function Home() {
                     }
                     aria-invalid={!!errors.occurredAt}
                     style={{
-                      border: "1.5px solid #E5E7EB",
+                      border: "1px solid var(--border-strong)",
                       borderRadius: 12,
                       padding: 12,
-                      ...(errors.occurredAt ? { borderColor: "#EF4444" } : {}),
+                      ...(errors.occurredAt ? { borderColor: "var(--danger)" } : {}),
                     }}
                   />
                 </label>
@@ -610,8 +782,8 @@ export default function Home() {
               {form.province && form.province !== "Gauteng" && (
                 <div
                   style={{
-                    background: "#FEF3C7",
-                    color: "#92400E",
+                    background: "var(--warn-tint)",
+                    color: "var(--warn-text)",
                     padding: "10px 12px",
                     borderRadius: 10,
                     fontSize: 13,
@@ -647,14 +819,14 @@ export default function Home() {
                     >
                       Join Waitlist
                     </button>
-                    {info && <span style={{ color: "#374151" }}>{info}</span>}
+                    {info && <span style={{ color: "var(--text-2)" }}>{info}</span>}
                   </div>
                 </div>
               )}
 
               <label style={{ display: "grid", gap: 6 }}>
                 <span
-                  style={{ color: "#374151", fontSize: 13, fontWeight: 600 }}
+                  style={{ color: "var(--text-2)", fontSize: 13, fontWeight: 600 }}
                 >
                   Details (optional)
                 </span>
@@ -666,7 +838,7 @@ export default function Home() {
                   }
                   placeholder="Short description"
                   style={{
-                    border: "1.5px solid #E5E7EB",
+                    border: "1px solid var(--border-strong)",
                     borderRadius: 12,
                     padding: 12,
                     resize: "vertical",
@@ -731,7 +903,7 @@ export default function Home() {
                     style={{
                       border: "none",
                       background: BRAND.purple,
-                      color: "#fff",
+                      color: "var(--on-brand)",
                       borderRadius: 12,
                       padding: "10px 12px",
                       fontWeight: 800,
@@ -744,7 +916,7 @@ export default function Home() {
               </div>
 
               {msg && (
-                <div style={{ color: "#374151", fontSize: 13 }}>{msg}</div>
+                <div style={{ color: "var(--text-2)", fontSize: 13 }}>{msg}</div>
               )}
             </form>
           </div>

@@ -16,12 +16,12 @@ import {
 } from "../lib/data";
 
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
-  blueLight: "#EFF5FC",
-  pinkLight: "#FDF3F8",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
+  purpleLight: "var(--brand-tint)",
+  blueLight: "var(--blue-tint)",
+  pinkLight: "var(--pink-tint)",
 };
 
 export default function RecordingsPage() {
@@ -158,7 +158,7 @@ export default function RecordingsPage() {
       <div
         style={{
           minHeight: "calc(100dvh - 60px)",
-          background: "#FAFAFA",
+          background: "var(--surface-2)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -168,16 +168,16 @@ export default function RecordingsPage() {
         <div style={{ maxWidth: 420, width: "100%" }}>
           <div
             style={{
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 20,
               padding: "20px 20px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              border: "2px solid #E5E7EB",
+              boxShadow: "none",
+              border: "1px solid var(--border-strong)",
               display: "grid",
               gap: 12,
             }}
           >
-            <strong style={{ color: "#1F2937", fontSize: 16 }}>
+            <strong style={{ color: "var(--text)", fontSize: 16 }}>
               Enter recordings password
             </strong>
             <input
@@ -186,13 +186,13 @@ export default function RecordingsPage() {
               onChange={(e) => setPassInput(e.target.value)}
               placeholder="Password"
               style={{
-                border: "1.5px solid #E5E7EB",
+                border: "1px solid var(--border-strong)",
                 borderRadius: 12,
                 padding: 12,
               }}
             />
             {error && (
-              <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12 }}>{error}</div>
             )}
             <button
               onClick={handleUnlock}
@@ -201,7 +201,7 @@ export default function RecordingsPage() {
                 borderRadius: 12,
                 border: "none",
                 background: BRAND.purple,
-                color: "#fff",
+                color: "var(--on-brand)",
                 fontWeight: 800,
                 cursor: "pointer",
               }}
@@ -219,7 +219,7 @@ export default function RecordingsPage() {
       <div
         style={{
           minHeight: "calc(100dvh - 60px)",
-          background: "#FAFAFA",
+          background: "var(--surface-2)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -229,16 +229,16 @@ export default function RecordingsPage() {
         <div style={{ maxWidth: 420, width: "100%" }}>
           <div
             style={{
-              background: "#fff",
+              background: "var(--surface)",
               borderRadius: 20,
               padding: "20px 20px",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              border: "2px solid #E5E7EB",
+              boxShadow: "none",
+              border: "1px solid var(--border-strong)",
               display: "grid",
               gap: 12,
             }}
           >
-            <strong style={{ color: "#1F2937", fontSize: 16 }}>
+            <strong style={{ color: "var(--text)", fontSize: 16 }}>
               Set a password for recordings
             </strong>
             <input
@@ -247,7 +247,7 @@ export default function RecordingsPage() {
               onChange={(e) => setPassInput(e.target.value)}
               placeholder="New password"
               style={{
-                border: "1.5px solid #E5E7EB",
+                border: "1px solid var(--border-strong)",
                 borderRadius: 12,
                 padding: 12,
               }}
@@ -258,13 +258,13 @@ export default function RecordingsPage() {
               onChange={(e) => setPassConfirm(e.target.value)}
               placeholder="Confirm password"
               style={{
-                border: "1.5px solid #E5E7EB",
+                border: "1px solid var(--border-strong)",
                 borderRadius: 12,
                 padding: 12,
               }}
             />
             {error && (
-              <div style={{ color: "#B91C1C", fontSize: 12 }}>{error}</div>
+              <div style={{ color: "var(--danger-strong)", fontSize: 12 }}>{error}</div>
             )}
             <button
               onClick={handleSetPassword}
@@ -273,7 +273,7 @@ export default function RecordingsPage() {
                 borderRadius: 12,
                 border: "none",
                 background: BRAND.purple,
-                color: "#fff",
+                color: "var(--on-brand)",
                 fontWeight: 800,
                 cursor: "pointer",
               }}
@@ -290,7 +290,7 @@ export default function RecordingsPage() {
     <div
       style={{
         minHeight: "calc(100dvh - 60px)",
-        background: "#FAFAFA",
+        background: "var(--surface-2)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -310,18 +310,18 @@ export default function RecordingsPage() {
           >
             Recordings
           </h1>
-          <div style={{ color: "#6B7280", fontSize: 14 }}>
+          <div style={{ color: "var(--muted)", fontSize: 14 }}>
             Saved in the cloud when online; also kept locally on this device.
           </div>
         </div>
 
         <div
           style={{
-            background: "#fff",
+            background: "var(--surface)",
             borderRadius: 20,
             padding: "20px 20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            border: "2px solid #E5E7EB",
+            boxShadow: "none",
+            border: "1px solid var(--border-strong)",
           }}
         >
           {!combinedEmpty && missingInCloud.length > 0 && (
@@ -363,8 +363,8 @@ export default function RecordingsPage() {
           {error && (
             <div
               style={{
-                background: "#FEE2E2",
-                color: "#991B1B",
+                background: "var(--danger-tint)",
+                color: "var(--danger-text)",
                 padding: "10px 12px",
                 borderRadius: 10,
                 fontSize: 13,
@@ -377,7 +377,7 @@ export default function RecordingsPage() {
           {loading ? (
             <div style={{ padding: 16 }}>Loading…</div>
           ) : combinedEmpty ? (
-            <div style={{ padding: 16, color: "#6B7280" }}>
+            <div style={{ padding: 16, color: "var(--muted)" }}>
               No recordings yet.
             </div>
           ) : (
@@ -396,7 +396,7 @@ export default function RecordingsPage() {
                     key={`cloud-${it.id}`}
                     style={{
                       padding: "12px 8px",
-                      borderBottom: "1px solid #F3F4F6",
+                      borderBottom: "1px solid var(--surface-3)",
                       display: "grid",
                       gap: 8,
                     }}
@@ -410,11 +410,11 @@ export default function RecordingsPage() {
                         flexWrap: "wrap",
                       }}
                     >
-                      <div style={{ color: "#1F2937", fontWeight: 700 }}>
+                      <div style={{ color: "var(--text)", fontWeight: 700 }}>
                         {pretty}
                         <span
                           style={{
-                            color: "#6B7280",
+                            color: "var(--muted)",
                             marginLeft: 8,
                             fontWeight: 500,
                           }}
@@ -502,7 +502,7 @@ export default function RecordingsPage() {
                     key={`local-${it.name}`}
                     style={{
                       padding: "12px 8px",
-                      borderBottom: "1px solid #F3F4F6",
+                      borderBottom: "1px solid var(--surface-3)",
                       display: "grid",
                       gap: 8,
                     }}
@@ -516,11 +516,11 @@ export default function RecordingsPage() {
                         flexWrap: "wrap",
                       }}
                     >
-                      <div style={{ color: "#1F2937", fontWeight: 700 }}>
+                      <div style={{ color: "var(--text)", fontWeight: 700 }}>
                         {pretty}
                         <span
                           style={{
-                            color: "#6B7280",
+                            color: "var(--muted)",
                             marginLeft: 8,
                             fontWeight: 500,
                           }}

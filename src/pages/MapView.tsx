@@ -15,6 +15,22 @@ export default function MapView() {
   const need = query.get("need");
   const openNow = query.get("openNow") === "1";
 
+  const NEED_LABELS: Record<string, string> = {
+    call_charge_wifi: "Charge or get online",
+    escort_transport: "Get home safely",
+    basic_comfort: "Rest & recover",
+    minor_medical: "Pharmacy & first aid",
+    talk_report: "Talk to someone",
+    police_security: "Police & security",
+    hospital_emergency: "Emergency room",
+    urgent_care: "Clinic or urgent care",
+    fire_rescue: "Fire & rescue",
+    roadside_assist: "Car trouble",
+  };
+  const headerLabel =
+    (need && NEED_LABELS[need]) ||
+    (level === "l2" ? "Urgent help" : "Safe places");
+
   const allowedTypes = useMemo(() => {
     // If a specific need is chosen (for either level), use its mapping
     const typesForNeed = getTypesForNeed(need);
@@ -33,7 +49,7 @@ export default function MapView() {
         display: "grid",
         gridTemplateRows: "auto 1fr",
         minHeight: "100dvh",
-        background: "#fff",
+        background: "transparent",
       }}
     >
       <header
@@ -45,31 +61,31 @@ export default function MapView() {
           display: "flex",
           alignItems: "center",
           gap: 8,
-          background: "rgba(255,255,255,0.96)",
-          backdropFilter: "saturate(160%) blur(6px)",
-          borderBottom: "1px solid #F3F4F6",
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border-strong)",
         }}
       >
         <Link
           to="/levels"
           style={{
             textDecoration: "none",
-            color: "#8764C1",
+            color: "var(--brand)",
             fontWeight: 700,
             padding: "8px 10px",
             borderRadius: 10,
-            border: "1px solid #E5E7EB",
+            border: "1px solid var(--border)",
           }}
         >
           &larr; Back
         </Link>
-        <div style={{ color: "#4B5563" }}>
-          Showing:{" "}
-          <strong style={{ color: "#8764C1" }}>
-            {level === "l2"
-              ? "Level 2 (Law/Security)"
-              : "Level 1 (General Help)"}
-          </strong>
+        <div style={{ color: "var(--muted)" }}>
+          Near you:{" "}
+          <strong style={{ color: "var(--brand)" }}>{headerLabel}</strong>
+          {openNow && (
+            <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700 }}>
+              · open now
+            </span>
+          )}
         </div>
       </header>
       <APIProvider apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>

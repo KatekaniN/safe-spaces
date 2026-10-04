@@ -138,10 +138,6 @@ export const PlaceInfoCard = ({
   };
 
   const cardOverlayStyle: React.CSSProperties = {
-    position: "absolute",
-    bottom: 0,
-    left: "50%",
-    transform: "translateX(-50%)",
     zIndex: 200,
   };
 
@@ -157,7 +153,7 @@ export const PlaceInfoCard = ({
     border: "none",
     cursor: "pointer",
     padding: "4px",
-    color: "#666",
+    color: "var(--muted)",
     fontSize: "24px",
     lineHeight: "1",
   };
@@ -165,36 +161,23 @@ export const PlaceInfoCard = ({
   const titleStyle: React.CSSProperties = {
     fontSize: "18px",
     fontWeight: "600",
-    color: "#8764C1",
+    color: "var(--brand)",
     margin: "0 0 4px 0",
   };
 
   const typeStyle: React.CSSProperties = {
     fontSize: "14px",
-    color: "#666",
+    color: "var(--muted)",
     textTransform: "capitalize",
   };
 
   const infoRowStyle: React.CSSProperties = {
-    display: "flex",
-    gap: "12px",
-    marginBottom: "16px",
-    fontSize: "14px",
-  };
-  const infoBadgeStyle: React.CSSProperties = {
-    backgroundColor: "#87A5DC", // app blue
-    color: "#FFFFFF",
-    padding: "6px 10px",
-    borderRadius: "999px",
-    fontWeight: 600,
-    display: "inline-flex",
-    alignItems: "center",
-    gap: "6px",
+    display: "none",
   };
 
   const statusBadgeStyle = (open?: boolean): React.CSSProperties => ({
-    backgroundColor: open ? "#87A5DC" : "#EC96BE", // blue when open, pink when closed
-    color: "#FFFFFF",
+    backgroundColor: open ? "var(--brand-blue)" : "var(--brand-pink)", // blue when open, pink when closed
+    color: "var(--on-brand)",
     padding: "6px 10px",
     borderRadius: "12px",
     fontWeight: 600,
@@ -203,7 +186,7 @@ export const PlaceInfoCard = ({
   });
 
   const smallTextStyle: React.CSSProperties = {
-    color: "#555",
+    color: "var(--muted)",
     fontSize: "13px",
     marginTop: "6px",
   };
@@ -211,8 +194,8 @@ export const PlaceInfoCard = ({
   const buttonStyle: React.CSSProperties = {
     width: "100%",
     padding: "14px",
-    backgroundColor: isNavigating ? "#EC96BE" : "#8764C1", // pink when active, purple otherwise
-    color: "white",
+    backgroundColor: isNavigating ? "var(--brand-pink)" : "var(--brand)", // pink when active, purple otherwise
+    color: "var(--on-brand)",
     border: "none",
     borderRadius: "10px",
     fontSize: "16px",
@@ -228,9 +211,9 @@ export const PlaceInfoCard = ({
   const secondaryButtonStyle: React.CSSProperties = {
     width: "100%",
     padding: "14px",
-    backgroundColor: "#ffffff",
-    color: "#8764C1",
-    border: "2px solid #8764C1",
+    backgroundColor: "var(--surface)",
+    color: "var(--brand)",
+    border: "2px solid var(--brand)",
     borderRadius: "10px",
     fontSize: "16px",
     fontWeight: 700,
@@ -246,9 +229,9 @@ export const PlaceInfoCard = ({
   const saveButtonStyle: React.CSSProperties = {
     width: "100%",
     padding: "14px",
-    backgroundColor: isFavorite ? "#EC96BE" : "#ffffff",
-    color: isFavorite ? "#ffffff" : "#8764C1",
-    border: `2px solid ${isFavorite ? "#EC96BE" : "#8764C1"}`,
+    backgroundColor: isFavorite ? "var(--brand-pink)" : "var(--surface)",
+    color: isFavorite ? "var(--on-brand)" : "var(--brand)",
+    border: `2px solid ${isFavorite ? "var(--brand-pink)" : "var(--brand)"}`,
     borderRadius: "10px",
     fontSize: "16px",
     fontWeight: 700,
@@ -270,11 +253,11 @@ export const PlaceInfoCard = ({
         }
 
         .ss-card {
-          background: rgba(255,255,255,0.98);
-          backdrop-filter: saturate(180%) blur(6px);
+          background: var(--surface);
+          border: 1px solid var(--border-strong);
           border-radius: 16px;
           padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
-          box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+          box-shadow: var(--shadow-lg);
           width: calc(100vw - 24px);
           max-width: 480px;
           margin: 12px;
@@ -287,14 +270,24 @@ export const PlaceInfoCard = ({
         }
 
         .ss-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 10px; }
-        .ss-title { font-size: 18px; font-weight: 700; color: #8764C1; margin: 0 0 2px 0; }
-        .ss-type { font-size: 14px; color: #6B7280; text-transform: capitalize; margin: 0; }
-        .ss-close { background:none; border:none; cursor:pointer; padding:4px; color:#6B7280; font-size:22px; line-height:1; }
-        .ss-close:hover { color:#8764C1; }
-        .ss-small { color:#555; font-size:13px; margin-top:6px; }
-        .ss-divider { height:1px; background: #F3F4F6; margin: 12px 0; }
+        .ss-title { font-size: 18px; font-weight: 700; color: var(--brand); margin: 0 0 2px 0; }
+        .ss-type { font-size: 14px; color: var(--muted); text-transform: capitalize; margin: 0; }
+        .ss-close { background:none; border:none; cursor:pointer; padding:4px; color:var(--muted); font-size:22px; line-height:1; }
+        .ss-close:hover { color:var(--brand); }
+        .ss-small { color:var(--muted); font-size:13px; margin-top:6px; }
+        .ss-divider { height:1px; background: var(--surface-3); margin: 12px 0; }
+
+        .ss-overlay { position:absolute; bottom:0; left:50%; transform:translateX(-50%); z-index:200; }
+        @media (min-width:900px){
+          .ss-overlay { left:auto; right:16px; bottom:16px; top:16px; transform:none; }
+          .ss-overlay .ss-card { margin:0; width:360px; max-height:100%; overflow:auto; }
+        }
+        .ss-tiles { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px; }
+        .ss-tile { background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:10px 12px; }
+        .ss-tile-k { display:flex; align-items:center; gap:5px; font-size:11px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:2px; }
+        .ss-tile-v { font-size:14px; font-weight:700; color:var(--text); }
       `}</style>
-      <div style={cardOverlayStyle}>
+      <div className="ss-overlay">
         <div className="ss-card">
           <div style={headerStyle}>
             <div>
@@ -347,7 +340,7 @@ export const PlaceInfoCard = ({
                       gap: 6,
                     }}
                   >
-                    <IconDistance style={{ color: "#8764C1" }} /> {address}
+                    <IconDistance style={{ color: "var(--brand)" }} /> {address}
                   </span>
                 </div>
               )}
@@ -360,11 +353,11 @@ export const PlaceInfoCard = ({
                       gap: 6,
                     }}
                   >
-                    <IconPhone style={{ color: "#8764C1" }} />
+                    <IconPhone style={{ color: "var(--brand)" }} />
                     <a
                       href={`tel:${phoneNumber}`}
                       style={{
-                        color: "#8764C1",
+                        color: "var(--brand)",
                         textDecoration: "none",
                         fontWeight: 700,
                       }}
@@ -379,15 +372,57 @@ export const PlaceInfoCard = ({
 
           <div style={infoRowStyle}>
             {calculatedDistance !== null && (
-              <div style={infoBadgeStyle}>
+              <div>
                 <IconDistance /> {formatDistance(calculatedDistance)}
               </div>
             )}
             {duration && (
-              <div style={infoBadgeStyle}>
+              <div>
                 <IconClock /> {duration}
               </div>
             )}
+          </div>
+
+          {/* Feature tiles (from real place data) */}
+          <div className="ss-tiles">
+            <div className="ss-tile">
+              <span className="ss-tile-k">
+                <IconClock style={{ color: "var(--brand)" }} /> Status
+              </span>
+              <span className="ss-tile-v">
+                {typeof isOpen === "boolean"
+                  ? isOpen
+                    ? "Open now"
+                    : "Closed"
+                  : "Hours vary"}
+              </span>
+            </div>
+            {calculatedDistance !== null && (
+              <div className="ss-tile">
+                <span className="ss-tile-k">
+                  <IconDistance style={{ color: "var(--brand)" }} /> Distance
+                </span>
+                <span className="ss-tile-v">
+                  {formatDistance(calculatedDistance)}
+                </span>
+              </div>
+            )}
+            {duration && (
+              <div className="ss-tile">
+                <span className="ss-tile-k">
+                  <IconNav style={{ color: "var(--brand)" }} /> On foot
+                </span>
+                <span className="ss-tile-v">{duration}</span>
+              </div>
+            )}
+            <div className="ss-tile">
+              <span className="ss-tile-k">
+                <IconPhone style={{ color: "var(--brand)" }} /> Contact
+              </span>
+              <span className="ss-tile-v">
+                {phoneNumber ? "Phone listed" : "Walk-in"}
+              </span>
+            </div>
           </div>
 
           {phoneNumber ? (
@@ -422,7 +457,7 @@ export const PlaceInfoCard = ({
                 }}
               >
                 <IconNav />{" "}
-                {isNavigating ? "Stop Navigation" : "Get Directions"}
+                {isNavigating ? "Stop Navigation" : "Start Safe Walk"}
               </button>
             </div>
           ) : (
@@ -438,7 +473,7 @@ export const PlaceInfoCard = ({
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
-              <IconNav /> {isNavigating ? "Stop Navigation" : "Get Directions"}
+              <IconNav /> {isNavigating ? "Stop Navigation" : "Start Safe Walk"}
             </button>
           )}
 

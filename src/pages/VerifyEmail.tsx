@@ -4,8 +4,8 @@ import { auth } from "../lib/firebase";
 import { useNavigate } from "react-router-dom";
 
 const BRAND = {
-  purple: "#8764C1",
-  pink: "#EC96BE",
+  purple: "var(--brand)",
+  pink: "var(--brand-pink)",
 };
 
 export default function VerifyEmailPage() {
@@ -50,7 +50,7 @@ export default function VerifyEmailPage() {
   return (
     <div style={{ padding: 16, maxWidth: 520, margin: "40px auto" }}>
       <h1 style={{ marginTop: 0 }}>Verify your email</h1>
-      <p style={{ color: "#374151" }}>
+      <p style={{ color: "var(--text-2)" }}>
         We sent a verification link to {user?.email}. Please click the link to
         verify your account before using the app.
       </p>
@@ -70,8 +70,8 @@ export default function VerifyEmailPage() {
       {error && (
         <div
           style={{
-            background: "#FEE2E2",
-            color: "#991B1B",
+            background: "var(--danger-tint)",
+            color: "var(--danger-text)",
             padding: 12,
             borderRadius: 8,
             marginBottom: 12,
@@ -95,7 +95,7 @@ export default function VerifyEmailPage() {
         >
           I verified, refresh
         </button>
-        <button onClick={signOut} style={btnOutline("#6B7280")}>
+        <button onClick={signOut} style={btnOutline("var(--muted)")}>
           Sign out
         </button>
       </div>

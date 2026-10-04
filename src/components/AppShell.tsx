@@ -1,15 +1,14 @@
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { getUserProfile, UserProfile } from "../lib/data";
-import logoUrl from "../assets/safe-spaces.png";
+import { Logo } from "./Logo";
 import InstallPrompt from "./InstallPrompt";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
-  const onMap = location.pathname.startsWith("/map");
-  const { user, loading, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   // Responsive label for the levels link on map
   const [vw, setVw] = React.useState<number>(
     typeof window !== "undefined" ? window.innerWidth : 1024
@@ -20,13 +19,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("resize", onResize);
   }, []);
   const isNarrow = vw < 640;
-  const levelsLinkLabel = onMap
-    ? isNarrow
-      ? "Switch Space"
-      : "Switch Safe Space"
-    : "Spaces";
+  const levelsLinkLabel = "Find help";
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
+  const { theme, toggleTheme } = useTheme();
 
   React.useEffect(() => {
     let mounted = true;
@@ -64,10 +60,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           position: "sticky",
           top: 0,
           zIndex: 20,
-          background: "rgba(255,255,255,0.98)",
-          backdropFilter: "saturate(160%) blur(10px)",
-          borderBottom: "1px solid rgba(135,100,193,0.1)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.04)",
+          padding: "env(safe-area-inset-top) 0 0 0",
+          background: "var(--surface)",
+          borderBottom: "1px solid var(--border-strong)",
         }}
       >
         <div
@@ -76,38 +71,27 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             alignItems: "center",
             justifyContent: "space-between",
             gap: 12,
-            padding: "calc(12px + env(safe-area-inset-top)) 16px 12px 16px",
-            maxWidth: 1200,
+            padding: "6px 16px",
+            maxWidth: 1100,
             margin: "0 auto",
           }}
         >
           <Link
             to="/"
+            aria-label="Safe Spaces home"
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 10,
               textDecoration: "none",
-              color: "#111827",
+              color: "var(--text)",
+              padding: "10px 0",
               transition: "opacity 0.2s",
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           >
-            <img
-              src={logoUrl}
-              alt="Safe Spaces"
-              width={60}
-              height={60}
-              style={{
-                display: "block",
-                /*  borderRadius: 8,
-                boxShadow: "0 2px 8px rgba(135,100,193,0.15)"*/
-              }}
-            />
-            {/*  <strong style={{ color: "#8764C1", fontSize: 16 }}>
-              Safe Spaces
-            </strong >*/}
+            <Logo />
           </Link>
 
           {/* Desktop nav */}
@@ -126,15 +110,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   to="/levels"
                   style={{
                     textDecoration: "none",
-                    color: "#8764C1",
+                    color: "var(--text-2)",
                     fontWeight: 700,
                     padding: "8px 14px",
-                    borderRadius: 10,
-                    border: "1.5px solid #8764C1",
+                    borderRadius: 8,
+                    border: "none",
                     background: "transparent",
-                    transition: "all 0.2s ease",
+                    transition: "all 0.15s ease",
                     whiteSpace: "nowrap",
-                    fontSize: 16,
+                    fontSize: 13,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
                   }}
                   aria-label={levelsLinkLabel}
                   title={levelsLinkLabel}
@@ -148,26 +134,46 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                   {levelsLinkLabel}
                 </Link>
               )}
-            {onMap && (
-              <span
-                style={{ color: "#6B7280", fontSize: 14, padding: "8px 6px" }}
-              >
-                Map
-              </span>
-            )}
+            <Link
+              to="/safety"
+              style={{
+                textDecoration: "none",
+                color: "var(--text-2)",
+                fontWeight: 700,
+                padding: "8px 14px",
+                borderRadius: 8,
+                border: "none",
+                background: "transparent",
+                transition: "all 0.15s ease",
+                whiteSpace: "nowrap",
+                fontSize: 13,
+                textTransform: "uppercase" as const,
+                letterSpacing: "0.08em",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(135,100,193,0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+              }}
+            >
+              Safety tools
+            </Link>
             <Link
               to="/profile"
               style={{
                 textDecoration: "none",
-                color: "#8764C1",
+                color: "var(--text-2)",
                 fontWeight: 700,
                 padding: "8px 14px",
-                borderRadius: 10,
-                border: "1.5px solid #8764C1",
+                borderRadius: 8,
+                border: "none",
                 background: "transparent",
-                transition: "all 0.2s ease",
+                transition: "all 0.15s ease",
                 whiteSpace: "nowrap",
-                fontSize: 16,
+                fontSize: 13,
+                textTransform: "uppercase" as const,
+                letterSpacing: "0.08em",
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = "rgba(135,100,193,0.15)";
@@ -183,15 +189,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 to="/admin"
                 style={{
                   textDecoration: "none",
-                  color: "#8764C1",
+                  color: "var(--text-2)",
                   fontWeight: 700,
                   padding: "8px 14px",
-                  borderRadius: 10,
-                  border: "1.5px solid #8764C1",
+                  borderRadius: 8,
+                  border: "none",
                   background: "transparent",
-                  transition: "all 0.2s ease",
+                  transition: "all 0.15s ease",
                   whiteSpace: "nowrap",
-                  fontSize: 16,
+                  fontSize: 13,
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.08em",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "rgba(135,100,193,0.15)";
@@ -204,30 +212,63 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Link>
             )}
           </nav>
-          {/* Right side: hamburger on mobile, sign out on desktop */}
+          {/* Right side: hamburger on mobile, install on desktop */}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {!loading && user && !isNarrow && (
-              <button
-                onClick={signOut}
-                title={user.email || "Sign out"}
-                style={{
-                  border: "1.5px solid #E5E7EB",
-                  background: "#fff",
-                  color: "#8764C1",
-                  fontWeight: 700,
-                  borderRadius: 10,
-                  padding: "8px 14px",
-                  cursor: "pointer",
-                }}
-              >
-                Sign out
-              </button>
-            )}
-
             {/* Install PWA button appears only when eligible */}
             <div style={{ display: isNarrow ? "none" : "inline-flex" }}>
               <InstallPrompt />
             </div>
+
+            {/* Theme toggle */}
+            <button
+              aria-label={
+                theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+              }
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+              onClick={toggleTheme}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1px solid var(--border-strong)",
+                background: "var(--surface)",
+                color: "var(--text-2)",
+                borderRadius: 10,
+                padding: 8,
+                width: 38,
+                height: 38,
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              {theme === "dark" ? (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                >
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+                </svg>
+              ) : (
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+                </svg>
+              )}
+            </button>
 
             {/* Hamburger */}
             <button
@@ -235,9 +276,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenuOpen(true)}
               style={{
                 display: isNarrow ? "inline-flex" : "none",
-                border: "1.5px solid #E5E7EB",
-                background: "#fff",
-                borderRadius: 10,
+                border: "1px solid var(--glass-border)",
+                background: "var(--glass-bg)",
+                borderRadius: 12,
                 padding: "8px 10px",
                 cursor: "pointer",
               }}
@@ -246,9 +287,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 style={{
                   width: 18,
                   height: 2,
-                  background: "#374151",
+                  background: "var(--text-2)",
                   display: "block",
-                  boxShadow: "0 6px 0 #374151, 0 -6px 0 #374151",
+                  boxShadow: "0 6px 0 var(--text-2), 0 -6px 0 var(--text-2)",
                 }}
               />
             </button>
@@ -261,12 +302,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <footer
         style={{
           padding: "16px 16px calc(16px + env(safe-area-inset-bottom))",
-          background: "rgba(247,247,248,0.6)",
-          borderTop: "1px solid rgba(135,100,193,0.08)",
+          background: "transparent",
+          borderTop: "1px solid var(--border)",
           textAlign: "center",
         }}
       >
-        <p style={{ margin: 0, color: "#9CA3AF", fontSize: 12 }}>
+        <p style={{ margin: 0, color: "var(--muted)", fontSize: 12 }}>
           Built with care • Always here for you
         </p>
       </footer>
@@ -293,8 +334,8 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               bottom: 0,
               width: "80%",
               maxWidth: 320,
-              background: "#FAFAFA",
-              borderLeft: "2px solid #E5E7EB",
+              background: "var(--surface-2)",
+              borderLeft: "2px solid var(--border)",
               padding: "20px 16px",
               display: "grid",
               alignContent: "start",
@@ -305,9 +346,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMenuOpen(false)}
               style={{
                 justifySelf: "end",
-                border: "1.5px solid #8764C1",
+                border: "1.5px solid var(--brand)",
                 background: "transparent",
-                color: "#8764C1",
+                color: "var(--brand)",
                 borderRadius: 10,
                 padding: "8px 12px",
                 cursor: "pointer",
@@ -330,6 +371,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               />
             )}
             <MenuLink
+              to="/safety"
+              label="Safety tools"
+              onNavigate={() => setMenuOpen(false)}
+            />
+            <MenuLink
               to="/profile"
               label="Profile"
               onNavigate={() => setMenuOpen(false)}
@@ -340,28 +386,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 label="Admin"
                 onNavigate={() => setMenuOpen(false)}
               />
-            )}
-            {!loading && user && (
-              <button
-                onClick={async () => {
-                  await signOut();
-                  setMenuOpen(false);
-                  navigate("/auth");
-                }}
-                style={{
-                  border: "1.5px solid #EC96BE",
-                  background: "#fff",
-                  borderRadius: 12,
-                  padding: "14px 16px",
-                  textAlign: "left",
-                  fontWeight: 700,
-                  fontSize: 15,
-                  color: "#EC96BE",
-                  cursor: "pointer",
-                }}
-              >
-                Sign out
-              </button>
             )}
           </div>
         </div>
@@ -385,11 +409,11 @@ function MenuLink({
       onClick={onNavigate}
       style={{
         textDecoration: "none",
-        color: "#8764C1",
+        color: "var(--brand)",
         padding: "14px 16px",
         borderRadius: 12,
-        border: "1.5px solid #E5E7EB",
-        background: "#fff",
+        border: "1px solid var(--border-strong)",
+        background: "var(--surface)",
         fontWeight: 700,
         fontSize: 16,
         transition: "all 0.2s ease",

@@ -1,209 +1,176 @@
 import { useNavigate } from "react-router-dom";
 
-const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
-  blueLight: "#EFF5FC",
-  pinkLight: "#FDF3F8",
-};
+const paths = [
+  {
+    key: "l1",
+    to: "/level1",
+    eyebrow: "Everyday support",
+    accent: "var(--brand)",
+    title: "A safe place nearby",
+    desc: "A calm, public spot with staff who can help — rest, charge your phone, or get home safely.",
+    examples: "Libraries · Pharmacies · Cafes · Malls · Parks",
+  },
+  {
+    key: "l2",
+    to: "/level2",
+    eyebrow: "Emergency",
+    accent: "var(--brand-pink)",
+    title: "Urgent help now",
+    desc: "Something serious is happening or might happen — get to official emergency services fast.",
+    examples: "Police · Hospitals · Fire & rescue · Urgent clinics",
+  },
+] as const;
 
 export default function LevelSelect() {
   const navigate = useNavigate();
-
-  const handleChoose = (level: "l1" | "l2") => {
-    if (level === "l1") {
-      navigate("/level1");
-    } else {
-      navigate("/level2");
-    }
-  };
 
   return (
     <div
       style={{
         minHeight: "calc(100dvh - 60px)",
-        background: "#FAFAFA",
-        padding: "24px 16px",
+        background: "transparent",
+        padding: "24px 16px 48px",
       }}
     >
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
-        <header style={{ marginBottom: 28, textAlign: "center" }}>
-          <h2
-            style={{
-              color: BRAND.purple,
-              margin: "0 0 8px 0",
-              fontSize: 28,
-              fontWeight: 800,
-              letterSpacing: "-0.02em",
-            }}
+      <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+        <header style={{ margin: "8px 0 28px" }}>
+          <span className="eyebrow">We're with you</span>
+          <h1
+            className="hero-title"
+            style={{ color: "var(--text)", margin: "6px 0 10px" }}
           >
-            Choose support level
-          </h2>
-          <p
-            style={{
-              color: "#6B7280",
-              margin: 0,
-              fontSize: 15,
-              lineHeight: 1.6,
-            }}
-          >
-            Pick the type of safe space you need right now.
+            How can we help
+            <br />
+            right now?
+          </h1>
+          <p style={{ color: "var(--muted)", margin: 0, fontSize: 16 }}>
+            Pick the one that matches your situation. You can switch any time.
           </p>
         </header>
 
-        <main style={{ display: "grid", gap: 16 }}>
-          <section
-            onClick={() => handleChoose("l1")}
-            style={{
-              border: `2px solid ${BRAND.purple}`,
-              borderRadius: 20,
-              padding: "20px 18px",
-              cursor: "pointer",
-              background: "#fff",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              transition:
-                "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = `0 4px 16px ${BRAND.purple}20`;
-              e.currentTarget.style.borderColor = BRAND.blue;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-              e.currentTarget.style.borderColor = BRAND.purple;
-            }}
-          >
-            <div
+        <div
+          style={{
+            display: "grid",
+            gap: 16,
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+          }}
+        >
+          {paths.map((p) => (
+            <section
+              key={p.key}
+              role="button"
+              tabIndex={0}
+              aria-label={p.title}
+              onClick={() => navigate(p.to)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") navigate(p.to);
+              }}
+              className="glass"
               style={{
+                position: "relative",
+                overflow: "hidden",
+                borderRadius: 28,
+                padding: "28px 24px 24px",
+                minHeight: 300,
                 display: "flex",
-                alignItems: "flex-start",
-                gap: 14,
-                marginBottom: 10,
+                flexDirection: "column",
+                cursor: "pointer",
+                transition:
+                  "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-4px)";
+                e.currentTarget.style.borderColor = p.accent;
+                e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.borderColor = "var(--glass-border)";
+                e.currentTarget.style.boxShadow = "var(--glass-shadow)";
               }}
             >
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: BRAND.purple,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
-                }}
+              {/* Accent arch motif */}
+              <svg
+                aria-hidden
+                width="54"
+                height="54"
+                viewBox="0 0 32 32"
+                fill="none"
+                style={{ marginBottom: 14 }}
               >
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
-                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
-                </svg>
-              </div>
-              <div>
-                <h3
-                  style={{
-                    margin: "0 0 6px 0",
-                    color: BRAND.purple,
-                    fontSize: 18,
-                    fontWeight: 700,
-                  }}
-                >
-                  Level 1 · General Help
-                </h3>
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#1F2937",
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  For everyday assistance: ask staff to walk you to transport,
-                  call a ride, or help with small issues.
-                </p>
-              </div>
-            </div>
-            <p style={{ margin: "0 0 0 66px", color: "#6B7280", fontSize: 13 }}>
-              Examples: pharmacies, cafes, restaurants, parks, lodging.
-            </p>
-          </section>
+                <path
+                  d="M16 3C8.8 3 4 8.6 4 16v12a1 1 0 001 1h5a1 1 0 001-1v-9a5 5 0 0110 0v9a1 1 0 001 1h5a1 1 0 001-1V16c0-7.4-4.8-13-12-13z"
+                  fill={p.accent}
+                  opacity="0.9"
+                />
+                <circle cx="16" cy="15.5" r="2.4" fill="var(--surface)" />
+              </svg>
 
-          <section
-            onClick={() => handleChoose("l2")}
-            style={{
-              border: `2px solid ${BRAND.pink}`,
-              borderRadius: 20,
-              padding: "20px 18px",
-              cursor: "pointer",
-              background: "#fff",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-              transition:
-                "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-2px)";
-              e.currentTarget.style.boxShadow = `0 4px 16px ${BRAND.pink}20`;
-              e.currentTarget.style.borderColor = BRAND.purple;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)";
-              e.currentTarget.style.borderColor = BRAND.pink;
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: 14,
-                marginBottom: 10,
-              }}
-            >
-              <div
+              <span className="eyebrow" style={{ color: p.accent }}>
+                {p.eyebrow}
+              </span>
+              <h2
                 style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: BRAND.pink,
-                  display: "grid",
-                  placeItems: "center",
-                  flexShrink: 0,
+                  margin: "10px 0 10px",
+                  fontSize: 30,
+                  color: "var(--text)",
+                  maxWidth: "80%",
                 }}
               >
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="white">
-                  <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1 16.5l-4.5-4.5L8 12.5l3 3 7-7 1.5 1.5-8.5 8.5z" />
-                </svg>
-              </div>
-              <div>
-                <h3
+                {p.title}
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  color: "var(--muted)",
+                  fontSize: 15,
+                  lineHeight: 1.6,
+                  maxWidth: "88%",
+                }}
+              >
+                {p.desc}
+              </p>
+
+              <div
+                style={{
+                  marginTop: "auto",
+                  paddingTop: 22,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <span
                   style={{
-                    margin: "0 0 6px 0",
-                    color: BRAND.pink,
+                    fontSize: 12.5,
+                    fontWeight: 600,
+                    color: "var(--text-2)",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  {p.examples}
+                </span>
+                <span
+                  aria-hidden
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: "50%",
+                    display: "grid",
+                    placeItems: "center",
+                    flexShrink: 0,
+                    background: p.accent,
+                    color: "var(--on-brand)",
                     fontSize: 18,
-                    fontWeight: 700,
                   }}
                 >
-                  Level 2 · Law Enforcement / Security
-                </h3>
-                <p
-                  style={{
-                    margin: 0,
-                    color: "#1F2937",
-                    fontSize: 14,
-                    lineHeight: 1.5,
-                  }}
-                >
-                  For serious emergencies or protection: find official police or
-                  emergency services.
-                </p>
+                  →
+                </span>
               </div>
-            </div>
-            <p style={{ margin: "0 0 0 66px", color: "#6B7280", fontSize: 13 }}>
-              Examples: police stations, hospitals.
-            </p>
-          </section>
-        </main>
+            </section>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -3,12 +3,12 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useSafetyMonitor } from "../hooks/useSafetyMonitor";
 
 const BRAND = {
-  purple: "#8764C1",
-  blue: "#87A5DC",
-  pink: "#EC96BE",
-  purpleLight: "#F3EFFC",
-  blueLight: "#EFF5FC",
-  pinkLight: "#FDF3F8",
+  purple: "var(--brand)",
+  blue: "var(--brand-blue)",
+  pink: "var(--brand-pink)",
+  purpleLight: "var(--brand-tint)",
+  blueLight: "var(--blue-tint)",
+  pinkLight: "var(--pink-tint)",
 };
 
 export default function SafetyListenerPage() {
@@ -55,40 +55,63 @@ export default function SafetyListenerPage() {
     <div
       style={{
         minHeight: "calc(100dvh - 60px)",
-        background: "#FAFAFA",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
+        background: "transparent",
+        padding: "24px 16px 48px",
       }}
     >
-      <div style={{ maxWidth: 640, width: "100%" }}>
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
+      <div style={{ maxWidth: 720, width: "100%", margin: "0 auto" }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span
+            style={{
+              display: "inline-block",
+              padding: "6px 14px",
+              borderRadius: 12,
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              textTransform: "uppercase",
+              color: "var(--brand)",
+              background: "var(--brand-tint)",
+              marginBottom: 14,
+            }}
+          >
+            Personal Safety Guardian
+          </span>
           <h1
             style={{
-              color: BRAND.purple,
+              color: "var(--text)",
               margin: "0 0 6px 0",
               fontSize: 28,
               fontWeight: 800,
               letterSpacing: "-0.02em",
             }}
           >
-            Emergency Mode
+            Recording Shield
           </h1>
+          <p
+            style={{
+              color: "var(--muted)",
+              fontSize: 15,
+              margin: "0 auto",
+              maxWidth: 460,
+              lineHeight: 1.5,
+            }}
+          >
+            Discreetly capture audio evidence and share your live location with
+            responders. Nothing runs until you start it.
+          </p>
           {statusMessage && (
-            <div style={{ color: "#374151", fontSize: 14 }}>
+            <div style={{ color: "var(--text-2)", fontSize: 14, marginTop: 8 }}>
               {statusMessage}
             </div>
           )}
         </div>
 
         <div
+          className="glass"
           style={{
-            background: "#fff",
-            borderRadius: 20,
-            padding: "20px 20px",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            border: "2px solid #E5E7EB",
+            borderRadius: 24,
+            padding: "22px 20px",
             display: "grid",
             gap: 16,
           }}
@@ -99,7 +122,7 @@ export default function SafetyListenerPage() {
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
-                color: "#374151",
+                color: "var(--text-2)",
                 fontSize: 14,
               }}
             >
@@ -118,71 +141,58 @@ export default function SafetyListenerPage() {
               />
               Share a live directions link with responders
             </label>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={isRecording ? stopEmergency : startEmergency}
+              className={isRecording ? "" : "glow-pulse"}
+              style={{
+                width: "100%",
+                padding: "18px",
+                borderRadius: 16,
+                border: "none",
+                background: isRecording ? BRAND.pink : BRAND.purple,
+                color: "var(--on-brand)",
+                fontWeight: 800,
+                fontSize: 17,
+                cursor: "pointer",
+              }}
+            >
+              {isRecording
+                ? `Stop recording (${countdown}s)`
+                : "Start silent recording"}
+            </button>
+            <Link to="/recordings" style={{ textDecoration: "none" }}>
               <button
                 type="button"
-                onClick={startEmergency}
-                disabled={isRecording}
                 style={{
+                  width: "100%",
                   padding: "12px 14px",
                   borderRadius: 12,
-                  border: "none",
-                  background: BRAND.pink,
-                  color: "#fff",
-                  fontWeight: 800,
-                  cursor: isRecording ? "not-allowed" : "pointer",
-                }}
-              >
-                {isRecording ? "Recording…" : "Start Recording Now"}
-              </button>
-              <button
-                type="button"
-                onClick={stopEmergency}
-                disabled={!isRecording}
-                style={{
-                  padding: "12px 14px",
-                  borderRadius: 12,
-                  border: `2px solid ${BRAND.pink}`,
+                  border: `2px solid ${BRAND.blue}`,
                   background: "transparent",
-                  color: BRAND.pink,
+                  color: BRAND.blue,
                   fontWeight: 800,
-                  cursor: !isRecording ? "not-allowed" : "pointer",
+                  cursor: "pointer",
                 }}
               >
-                Stop
+                View recordings
               </button>
-              <Link to="/recordings" style={{ textDecoration: "none" }}>
-                <button
-                  type="button"
-                  style={{
-                    padding: "12px 14px",
-                    borderRadius: 12,
-                    border: `2px solid ${BRAND.blue}`,
-                    background: "transparent",
-                    color: BRAND.blue,
-                    fontWeight: 800,
-                    cursor: "pointer",
-                  }}
-                >
-                  View Recordings
-                </button>
-              </Link>
-            </div>
+            </Link>
             {isRecording && (
-              <div style={{ color: "#6B7280", fontSize: 14 }}>
+              <div style={{ color: "var(--muted)", fontSize: 14 }}>
                 Auto-stopping in <strong>{countdown}s</strong>
               </div>
             )}
-            <div style={{ color: "#6B7280", fontSize: 13 }}>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>
               Listener: {isListening ? "on" : "off"} · Trigger capture:{" "}
               {isTriggerRecording ? "recording" : "idle"}
             </div>
           </div>
 
-          <div style={{ borderTop: "1px solid #F3F4F6", margin: "4px 0" }} />
+          <div style={{ borderTop: "1px solid var(--surface-3)", margin: "4px 0" }} />
 
           <div style={{ display: "grid", gap: 12 }}>
-            <strong style={{ color: "#1F2937", fontSize: 15 }}>
+            <strong style={{ color: "var(--text)", fontSize: 15 }}>
               Trigger words
             </strong>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -196,7 +206,7 @@ export default function SafetyListenerPage() {
                   borderRadius: 12,
                   border: `2px solid ${BRAND.purple}`,
                   background: isTriggerRecording ? BRAND.purple : "transparent",
-                  color: isTriggerRecording ? "#fff" : BRAND.purple,
+                  color: isTriggerRecording ? "var(--on-brand)" : BRAND.purple,
                   fontWeight: 800,
                   cursor: "pointer",
                 }}
@@ -216,7 +226,7 @@ export default function SafetyListenerPage() {
                   onChange={(e) => setManualTrigger(e.target.value)}
                   placeholder="Add trigger manually"
                   style={{
-                    border: "1.5px solid #E5E7EB",
+                    border: "1px solid var(--border-strong)",
                     borderRadius: 12,
                     padding: "10px 12px",
                     minWidth: 220,
@@ -229,7 +239,7 @@ export default function SafetyListenerPage() {
                     borderRadius: 12,
                     border: "none",
                     background: BRAND.purple,
-                    color: "#fff",
+                    color: "var(--on-brand)",
                     fontWeight: 800,
                     cursor: "pointer",
                   }}
@@ -248,7 +258,7 @@ export default function SafetyListenerPage() {
                       background: BRAND.purpleLight,
                       color: BRAND.purple,
                       padding: "8px 10px",
-                      borderRadius: 999,
+                      borderRadius: 12,
                       display: "inline-flex",
                       alignItems: "center",
                       gap: 6,
@@ -276,11 +286,40 @@ export default function SafetyListenerPage() {
                 ))}
               </div>
             ) : (
-              <div style={{ color: "#6B7280", fontSize: 13 }}>
+              <div style={{ color: "var(--muted)", fontSize: 13 }}>
                 No triggers yet. Record or add a phrase like "help me".
               </div>
             )}
           </div>
+        </div>
+
+        {/* Trusted circle */}
+        <div
+          className="glass"
+          style={{
+            borderRadius: 20,
+            padding: "18px 20px",
+            marginTop: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <div>
+            <strong
+              style={{ color: "var(--text)", fontSize: 15, display: "block" }}
+            >
+              Trusted circle
+            </strong>
+            <span style={{ color: "var(--muted)", fontSize: 13 }}>
+              People we alert when you trigger the shield.
+            </span>
+          </div>
+          <Link to="/profile" style={{ textDecoration: "none" }}>
+            <span className="chip">Manage contacts</span>
+          </Link>
         </div>
       </div>
     </div>
